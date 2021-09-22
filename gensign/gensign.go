@@ -1,0 +1,63 @@
+package gensign
+
+import (
+	"fmt"
+	"log"
+	"runtime/debug"
+	"time"
+
+	"go.vzbuilders.com/peng/sshra-oss/csr"
+	"golang.org/x/crypto/ssh"
+)
+
+func Run(params *csr.ReqParam, handlers []Handler, signer csr.Signer) (err error) {
+	// Prepare for panic logs
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf(`gensign: id=%q, msg="unexpected crash", err=%q`, params.TransID, string(debug.Stack()))
+		}
+	}()
+
+	// Emit log message for start.
+	start := time.Now()
+	log.Printf(`gensign: id=%q, msg="validating input"`, params.TransID)
+
+	var handler Handler
+	for _, h := range handlers {
+		if err := h.Authenticate(params); err == nil {
+			handler = h
+			break
+		}
+		// TODO: Log error to some debug file here.
+		//
+		// Note that there will be many false positives
+		// because only one handler is expected to authenticate the user successfully,
+		// and that's why we want this information to be in a debug file instead of a regular log file.
+	}
+	if handler == nil {
+		return fmt.Errorf(`gensign: id=%q, msg="all authentications failed"`, params.TransID)
+	}
+
+	sshCSRs, err := handler.Generate(params)
+	if err != nil {
+		return fmt.Errorf(`gensign: id=%q, msg="failed to generate CSR", err=%q`, params.TransID, err)
+	}
+
+	var certs []ssh.PublicKey
+	var comments []string
+	for _, csr := range sshCSRs {
+		cert, comment, err := signer.Sign(params.TransID, csr)
+		if err != nil {
+			return fmt.Errorf(`gensign: id=%q, msg="failed to sign CSR", err=%q"`, params.TransID, err)
+		}
+		certs = append(certs, cert)
+		comments = append(comments, comment)
+	}
+	err = handler.UpdateCerts(certs, comments)
+	if err != nil {
+		return fmt.Errorf(`gensign: id=%q, msg="failed to update certificate", err=%q"`, params.TransID, err)
+	}
+
+	log.Printf(`gensign: id=%q, msg="gensign success", elapsed=%q`, params.TransID, time.Since(start).String())
+	return nil
+}

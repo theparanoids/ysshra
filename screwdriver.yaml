@@ -1,0 +1,25 @@
+---
+version: 4
+
+annotations:
+  screwdriver.cd/chainPR: true
+  screwdriver.cd/executor: k8s-restricted
+
+shared:
+  template: go/rhel8
+  steps:
+    - testrace: echo 'no-op testrace'
+    - package-rpm: echo 'no-op package-rpm'
+    - publish-to-artifactory: echo 'no-op publish-to-artifactory'
+    - wait-for-metadata: echo 'no-op wait-for-metadata'
+
+jobs:
+  all:
+    requires: [~pr, ~commit]
+    steps:
+      - package-rpm: echo "skip package-rpm step in all job"
+      - publish-to-artifactory: echo "skip publish-to-artifactory in all job"
+      - postpublish-to-artifactory: echo "skip postpublish-to-artifactory in all job"
+
+  sshra-gensign:
+    requires: [~pr, ~commit]

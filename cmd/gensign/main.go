@@ -4,7 +4,7 @@ import (
 	"log"
 	"os"
 
-	"go.vzbuilders.com/peng/sshra-oss/agent"
+	"go.vzbuilders.com/peng/sshra-oss/agent/ssh"
 	"go.vzbuilders.com/peng/sshra-oss/config"
 	"go.vzbuilders.com/peng/sshra-oss/csr"
 	"go.vzbuilders.com/peng/sshra-oss/gensign"
@@ -22,7 +22,7 @@ func main() {
 	}
 	// TODO: Setup mutli-writer for info and debug loggers.
 
-	conn, err := agent.SSHAgentConn()
+	conn, err := ssh.AgentConn()
 	if err != nil {
 		log.Fatalf("failed to initailize the connection for ssh agent, %v", err)
 	}

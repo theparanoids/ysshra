@@ -18,8 +18,14 @@ import (
 //   which fields to look at depending on the version
 // - Add version-specific sanity check to certain fields in Marshal() and Unmarshal()
 
-// MsgUnsupportedVersion should be used as the error message when the version of KeyID is not supported.
-const MsgUnsupportedVersion = "unsupported Key ID version: %d"
+const (
+	// DefaultVersion is the default version of keyID.
+	// Currently, only version 1 is supported.
+	DefaultVersion = 1
+
+	// MsgUnsupportedVersion should be used as the error message when the version of KeyID is not supported.
+	MsgUnsupportedVersion = "unsupported Key ID version: %d"
+)
 
 // TouchPolicy is an integer that indicates the touch policy
 // of a certificate.
@@ -65,11 +71,11 @@ func (policy TouchPolicy) String() string {
 // currently encoding/json package does not provide a `required` field tag,
 // so manual sanity check is performed.
 // more info: https://github.com/golang/go/issues/17163
-var version2RequiredKeys = map[uint16][]string{
+var requiredKeysByVersion = map[uint16][]string{
 	1: {"prins", "transID", "reqUser", "reqIP", "reqHost", "isFirefighter", "isHWKey", "isHeadless", "isNonce", "touchPolicy", "ver"},
 }
 
-var version2SanityChecker = map[uint16]func(*KeyID) error{
+var sanityCheckerByVersion = map[uint16]func(*KeyID) error{
 	1: func(id *KeyID) error {
 		err := sanityCheckerHeadless(id)
 		if err != nil {
@@ -103,9 +109,16 @@ type KeyID struct {
 	Version     uint16 `json:"ver"`
 }
 
+// New creates a default KeyID.
+func New() *KeyID {
+	return &KeyID{
+		Version: DefaultVersion,
+	}
+}
+
 // Marshal encodes keyID to a string.
 func (kid *KeyID) Marshal() (string, error) {
-	sanityChecker, ok := version2SanityChecker[kid.Version]
+	sanityChecker, ok := sanityCheckerByVersion[kid.Version]
 	if !ok {
 		return "", fmt.Errorf(MsgUnsupportedVersion, kid.Version)
 	}
@@ -129,7 +142,7 @@ func Unmarshal(kidStr string) (*KeyID, error) {
 		return nil, fmt.Errorf("fail to unmarshal keyid string: %v", err)
 	}
 
-	requiredKeys, ok := version2RequiredKeys[kid.Version]
+	requiredKeys, ok := requiredKeysByVersion[kid.Version]
 	if !ok {
 		return nil, fmt.Errorf(MsgUnsupportedVersion, kid.Version)
 	}
@@ -144,7 +157,7 @@ func Unmarshal(kidStr string) (*KeyID, error) {
 		}
 	}
 
-	sanityChecker, ok := version2SanityChecker[kid.Version]
+	sanityChecker, ok := sanityCheckerByVersion[kid.Version]
 	if !ok {
 		return nil, fmt.Errorf(MsgUnsupportedVersion, kid.Version)
 	}

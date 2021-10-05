@@ -24,7 +24,7 @@ func Agent() (ag.Agent, net.Conn, error) {
 	return agent, conn, nil
 }
 
-// AgentConn returns the connection for ssh agent.
+// AgentConn returns the connection for ssh agent based on SSH_AUTH_SOCK.
 func AgentConn() (net.Conn, error) {
 	sshAuthSock, err := CheckSSHAuthSock()
 	if err != nil {
@@ -49,7 +49,7 @@ func AgentBySocket(socketPath string) (ag.Agent, net.Conn, error) {
 }
 
 // CheckSSHAuthSock checks for presence of ssh agent and if one present,
-// returns the value of SSH_AUTH_SOCK environment variable
+// returns the value of SSH_AUTH_SOCK environment variable.
 func CheckSSHAuthSock() (string, error) {
 	sshAuthSock := os.Getenv("SSH_AUTH_SOCK")
 	if strings.TrimSpace(sshAuthSock) == "" {

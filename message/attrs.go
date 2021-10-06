@@ -9,11 +9,13 @@ type Attributes struct {
 	// Username is the user name of client. Required.
 	Username string
 	// Hostname is the host name of client. Required.
-	Hostname      string
-	HardKey       bool
-	Touch2SSH     bool
-	Github        bool
-	TouchlessSudo *TouchlessSudo
+	Hostname string
+	// SSHClientVersion is the ssh version on the requester host. Required.
+	SSHClientVersion string
+	HardKey          bool
+	Touch2SSH        bool
+	Github           bool
+	TouchlessSudo    *TouchlessSudo
 }
 
 // TouchlessSudo stores information that client passes to RA about touchless sudo.
@@ -21,6 +23,4 @@ type TouchlessSudo struct {
 	IsFirefighter      bool
 	TouchlessSudoHosts string
 	TouchlessSudoTime  time.Duration
-	// TODO: Figure out why SSHClientVersion is needed only in TouchlessSudo scenario.
-	SSHClientVersion string
 }

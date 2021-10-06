@@ -15,42 +15,52 @@ const (
 	isFirefighterAttr      = "IsFirefighter"
 	touchlessSudoHostsAttr = "TouchlessSudoHosts"
 	touchlessSudoTimeAttr  = "TouchlessSudoTime"
-	sshClientVersion       = "SSHClientVersion"
+	sshClientVersionAttr   = "SSHClientVersion"
 )
 
-func Marshal(m *Attributes) (string, error) {
+// Marshal converts an *Attributes to a string.
+// It guarantees the output fields are all valid in format when error is nil.
+func Marshal(a *Attributes) (string, error) {
 	cmdArgs := []string{interfaceVersion}
-	if m.Username == "" {
+	if a.SSHClientVersion == "" {
+		return "", errors.New("ssh client version cannot be empty")
+	}
+	cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%s", sshClientVersionAttr, a.SSHClientVersion))
+	if a.Username == "" {
 		return "", errors.New("user name cannot be empty")
 	}
-	if m.Hostname == "" {
+	if a.Hostname == "" {
 		return "", errors.New("host name cannot be empty")
 	}
-	cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%s@%s", requesterAttr, m.Username, m.Hostname))
-	if m.HardKey {
-		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%v", hardKeyAttr, m.HardKey))
+	cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%s@%s", requesterAttr, a.Username, a.Hostname))
+	if a.HardKey {
+		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%v", hardKeyAttr, a.HardKey))
 	}
-	if m.Touch2SSH {
-		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%v", touch2SSHAttr, m.Touch2SSH))
+	if a.Touch2SSH {
+		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%v", touch2SSHAttr, a.Touch2SSH))
 	}
 	// Client >= 2.5.1 should always pass github= argument so server can tell it's newer version
-	cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%v", githubAttr, m.Github))
+	cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%v", githubAttr, a.Github))
 
-	if m.TouchlessSudo != nil {
-		if m.TouchlessSudo.IsFirefighter {
-			cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%v", isFirefighterAttr, m.TouchlessSudo.IsFirefighter))
+	if a.TouchlessSudo != nil {
+		if a.TouchlessSudo.IsFirefighter {
+			cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%v", isFirefighterAttr, a.TouchlessSudo.IsFirefighter))
 		}
-		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%s", touchlessSudoHostsAttr, m.TouchlessSudo.TouchlessSudoHosts))
-		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%d", touchlessSudoTimeAttr, int(m.TouchlessSudo.TouchlessSudoTime.Minutes())))
-		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%s", sshClientVersion, m.TouchlessSudo.SSHClientVersion))
+		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%s", touchlessSudoHostsAttr, a.TouchlessSudo.TouchlessSudoHosts))
+		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%d", touchlessSudoTimeAttr, int(a.TouchlessSudo.TouchlessSudoTime.Minutes())))
 	}
 
 	return strings.Join(cmdArgs, " "), nil
 }
 
-func Unmarshal(argsStr string) (*Attributes, error) {
-	m := &Attributes{}
-	attrs := parseAttrs(argsStr)
+// Unmarshal converts a string to an *Attributes.
+// It guarantees the output fields are all valid in format when error is nil.
+func Unmarshal(attrsStr string) (*Attributes, error) {
+	attrs := parseAttrs(attrsStr)
+
+	a := &Attributes{}
+	// TODO: Return error when ssh client version is empty. Now not every client sends this attribute.
+	a.SSHClientVersion = attrs[sshClientVersionAttr]
 
 	requester, ok := attrs[requesterAttr]
 	if !ok {
@@ -61,25 +71,25 @@ func Unmarshal(argsStr string) (*Attributes, error) {
 	if len(fields) != 2 {
 		return nil, fmt.Errorf(`invalid requester format: %s`, requester)
 	}
-	m.Username = fields[0]
-	m.Hostname = fields[1]
+	a.Username = fields[0]
+	a.Hostname = fields[1]
 
 	if _, ok := attrs[hardKeyAttr]; ok {
-		m.HardKey = true
+		a.HardKey = true
 	}
 
 	if _, ok := attrs[touch2SSHAttr]; ok {
-		m.Touch2SSH = true
+		a.Touch2SSH = true
 	}
 
 	var err error
-	if m.Github, err = strconv.ParseBool(attrs[githubAttr]); err != nil {
+	if a.Github, err = strconv.ParseBool(attrs[githubAttr]); err != nil {
 		return nil, err
 	}
 
 	// TODO: marshal touchless sudo fields
 
-	return m, nil
+	return a, nil
 }
 
 func parseAttrs(attrsStr string) map[string]string {

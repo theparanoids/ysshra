@@ -5,21 +5,23 @@ import (
 	"testing"
 )
 
+// TODO: add more tests.
 func TestMarshal(t *testing.T) {
-	m := &Attributes{
-		Username:  "user",
-		Hostname:  "host.com",
-		HardKey:   true,
-		Touch2SSH: false,
-		Github:    false,
+	a := &Attributes{
+		Username:         "user",
+		Hostname:         "host.com",
+		SSHClientVersion: "8.1",
+		HardKey:          true,
+		Touch2SSH:        false,
+		Github:           false,
 		// TODO: test marshal and unmarshal of TouchlessSudo.
 		TouchlessSudo: nil,
 	}
-	s, err := Marshal(m)
+	s, err := Marshal(a)
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := "IFVer=6 req=user@host.com HardKey=true github=false"
+	want := "IFVer=6 SSHClientVersion=8.1 req=user@host.com HardKey=true github=false"
 	if s != want {
 		t.Fatalf("expect: %q, got: %q", want, s)
 	}
@@ -27,8 +29,8 @@ func TestMarshal(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(m, mm) {
-		t.Fatalf("expect: %+v, got: %+v", m, mm)
+	if !reflect.DeepEqual(a, mm) {
+		t.Fatalf("expect: %+v, got: %+v", a, mm)
 	}
 }
 

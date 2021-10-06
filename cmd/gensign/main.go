@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 
 	"go.vzbuilders.com/peng/sshra-oss/agent/ssh"
 	"go.vzbuilders.com/peng/sshra-oss/config"
@@ -30,7 +31,9 @@ func main() {
 		regular.NewHandler(conf, conn),
 	}
 
-	reqParam, err := csr.NewReqParam()
+	reqParam, err := csr.NewReqParam(os.Getenv, func() []string {
+		return os.Args
+	})
 	if err != nil {
 		log.Fatal(err)
 	}

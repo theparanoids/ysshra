@@ -6,8 +6,8 @@ import (
 	"strings"
 
 	"go.vzbuilders.com/peng/sshra-oss/common"
+	"go.vzbuilders.com/peng/sshra-oss/csr/transid"
 	"go.vzbuilders.com/peng/sshra-oss/message"
-	"go.vzbuilders.com/peng/sshra-oss/pkg/transid"
 )
 
 // ReqParam stores options to invoke gensign.Handler.

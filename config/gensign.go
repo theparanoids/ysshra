@@ -3,8 +3,9 @@ package config
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/mitchellh/mapstructure"
 	"os"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 type handlerConfMap map[string]interface{}

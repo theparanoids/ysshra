@@ -12,17 +12,21 @@ import (
 	ag "golang.org/x/crypto/ssh/agent"
 
 	"github.com/theparanoids/crypki/proto"
+	"go.vzbuilders.com/peng/sshra-oss/common"
 	"go.vzbuilders.com/peng/sshra-oss/config"
+	"go.vzbuilders.com/peng/sshra-oss/crypki"
 	"go.vzbuilders.com/peng/sshra-oss/csr"
 	"go.vzbuilders.com/peng/sshra-oss/gensign"
 	"go.vzbuilders.com/peng/sshra-oss/internal/cert/broker"
+	"go.vzbuilders.com/peng/sshra-oss/keyid"
 )
 
 const (
 	// HandlerName is a unique name to identify a handler.
 	HandlerName = "Regular"
 	// IsForHumanUser indicates whether this handler should be used for a human user.
-	IsForHumanUser = true
+	IsForHumanUser         = true
+	defaultCertValiditySec = 12 * 3600 // 12 hours
 )
 
 // Handler implements gensign.Handler.
@@ -53,35 +57,76 @@ func NewHandler(gensignConf *config.GensignConfig, conn net.Conn) gensign.Handle
 	}
 }
 
+// TODO: rewrite the comment here. The comment may not include OTP.
 // Authenticate succeeds if the user is allowed to use OTP to get a certificate.
 func (h *Handler) Authenticate(param *csr.ReqParam) error {
+	err := param.Validate()
+	if err != nil {
+		return gensign.NewError(gensign.InvalidParams, HandlerName, err)
+	}
+
+	if param.NamespacePolicy != common.NoNamespace {
+		return gensign.NewErrorWithMsg(gensign.HandlerAuthN, HandlerName, fmt.Sprintf("want namespace policy %s, but got %s", common.NoNamespace, param.NamespacePolicy))
+	}
+	if param.Attrs.HardKey {
+		return gensign.NewErrorWithMsg(gensign.HandlerAuthN, HandlerName, "do not support hard key validation")
+	}
+
 	if !h.enabled {
 		return gensign.NewError(gensign.HandlerDisabled, HandlerName)
 	}
-	// TODO:
-	// Check request param.
+
 	if err := h.challengePubKey(param); err != nil {
 		return gensign.NewError(gensign.HandlerAuthN, HandlerName, err)
 	}
-	return gensign.NewErrorWithMsg(gensign.Unknown, HandlerName, "not implemented")
+	return nil
 }
 
+// TODO: add tests and wrap all errors as gensign errors.
 // Generate implements csr.Generator.
 func (h *Handler) Generate(param *csr.ReqParam) ([]*proto.SSHCertificateSigningRequest, error) {
-	// TODO
-	// 1. Generate new key pair
-	// 2. Process keyId
-	// 3. Append certificate requests to the return slice
-	return nil, nil
+	err := param.Validate()
+	if err != nil {
+		return nil, gensign.NewError(gensign.InvalidParams, HandlerName, err)
+	}
+
+	pubKeyBytes, err := getPubKeyBytes(h.pubKeyDirPath, param.LogName)
+	if err != nil {
+		return nil, err
+	}
+
+	kid := &keyid.KeyID{
+		Principals:    []string{param.LogName},
+		TransID:       param.TransID,
+		ReqUser:       param.ReqUser,
+		ReqIP:         param.ClientIP,
+		ReqHost:       param.ReqHost,
+		Version:       keyid.DefaultVersion,
+		IsFirefighter: false,
+		IsHWKey:       false,
+		IsHeadless:    false,
+		IsNonce:       false,
+		Usage:         keyid.AllUsage,
+		TouchPolicy:   keyid.NeverTouch,
+	}
+
+	request := &proto.SSHCertificateSigningRequest{
+		KeyMeta:    &proto.KeyMeta{Identifier: crypki.SSHUserKeyID},
+		Extensions: crypki.GetDefaultExtension(),
+		Validity:   defaultCertValiditySec,
+		Principals: kid.Principals,
+		PublicKey:  string(pubKeyBytes),
+	}
+
+	request.KeyId, err = kid.Marshal()
+	if err != nil {
+		return nil, err
+	}
+	return []*proto.SSHCertificateSigningRequest{request}, nil
 }
 
 func (h *Handler) challengePubKey(param *csr.ReqParam) error {
-	pubKeyPath, err := h.lookupPubKeyFile(param.LogName)
-	if err != nil {
-		return err
-	}
-
-	pubKeyBytes, err := os.ReadFile(pubKeyPath)
+	pubKeyBytes, err := getPubKeyBytes(h.pubKeyDirPath, param.LogName)
 	if err != nil {
 		return err
 	}
@@ -102,11 +147,21 @@ func (h *Handler) challengePubKey(param *csr.ReqParam) error {
 	return pubKey.Verify(data, sig)
 }
 
+// getPubKeyBytes returns the public key for the logName in []byte format.
+func getPubKeyBytes(pubKeyDirPath string, logName string) ([]byte, error) {
+	pubKeyPath, err := lookupPubKeyFile(pubKeyDirPath, logName)
+	if err != nil {
+		return nil, err
+	}
+
+	return os.ReadFile(pubKeyPath)
+}
+
 // lookupPubKeyFile returns the public key path for the logName.
-func (h *Handler) lookupPubKeyFile(logName string) (string, error) {
-	pubKeyPath := path.Join(h.pubKeyDirPath, logName)
+func lookupPubKeyFile(pubKeyDirPath string, logName string) (string, error) {
+	pubKeyPath := path.Join(pubKeyDirPath, logName)
 	if _, err := os.Stat(pubKeyPath); err != nil {
-		pubKeyPath = path.Join(h.pubKeyDirPath, logName+".pub")
+		pubKeyPath = path.Join(pubKeyDirPath, logName+".pub")
 	}
 	if _, err := os.Stat(pubKeyPath); os.IsNotExist(err) {
 		return "", err

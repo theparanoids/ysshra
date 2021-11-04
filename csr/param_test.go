@@ -10,24 +10,27 @@ import (
 
 func TestNewReqParam(t *testing.T) {
 	t.Parallel()
+	goodEnvGetter := func(s string) string {
+		m := map[string]string{
+			"SSH_CONNECTION":       "1.2.3.4 36673 192.168.223.229 22",
+			"LOGNAME":              "user",
+			"SSH_ORIGINAL_COMMAND": "IFVer=6 SSHClientVersion=8.1 req=user@host.com HardKey=true github=false",
+		}
+		return m[s]
+	}
+	goodOSArgsGetter := func() []string {
+		return []string{"/usr/bin/gen-sign", "NONS", "Regular"}
+	}
 	tests := map[string]struct {
 		envGetter        func(string) string
 		osArgsGetter     func() []string
+		hostNameGetter   func() (string, error)
 		wantErr          bool
 		expectedReqParam *ReqParam
 	}{
 		"happy path": {
-			envGetter: func(s string) string {
-				m := map[string]string{
-					"SSH_CONNECTION":       "1.2.3.4 36673 192.168.223.229 22",
-					"LOGNAME":              "user",
-					"SSH_ORIGINAL_COMMAND": "IFVer=6 SSHClientVersion=8.1 req=user@host.com HardKey=true github=false",
-				}
-				return m[s]
-			},
-			osArgsGetter: func() []string {
-				return []string{"/usr/bin/gen-sign", "NONS", "Regular"}
-			},
+			envGetter:    goodEnvGetter,
+			osArgsGetter: goodOSArgsGetter,
 			expectedReqParam: &ReqParam{
 				NamespacePolicy:  common.NoNamespace,
 				HandlerName:      "Regular",
@@ -36,7 +39,7 @@ func TestNewReqParam(t *testing.T) {
 				ReqUser:          "user",
 				ReqHost:          "host.com",
 				SSHClientVersion: "8.1",
-				attrs: &message.Attributes{
+				Attrs: &message.Attributes{
 					Username:         "user",
 					Hostname:         "host.com",
 					SSHClientVersion: "8.1",
@@ -55,10 +58,8 @@ func TestNewReqParam(t *testing.T) {
 				}
 				return m[s]
 			},
-			osArgsGetter: func() []string {
-				return []string{"/usr/bin/gen-sign", "NONS", "Regular"}
-			},
-			wantErr: true,
+			osArgsGetter: goodOSArgsGetter,
+			wantErr:      true,
 		},
 		"invalid LOGNAME": {
 			envGetter: func(s string) string {
@@ -68,10 +69,8 @@ func TestNewReqParam(t *testing.T) {
 				}
 				return m[s]
 			},
-			osArgsGetter: func() []string {
-				return []string{"/usr/bin/gen-sign", "NONS", "Regular"}
-			},
-			wantErr: true,
+			osArgsGetter: goodOSArgsGetter,
+			wantErr:      true,
 		},
 		"invalid SSH_ORIGINAL_COMMAND": {
 			envGetter: func(s string) string {
@@ -81,34 +80,18 @@ func TestNewReqParam(t *testing.T) {
 				}
 				return m[s]
 			},
-			osArgsGetter: func() []string {
-				return []string{"/usr/bin/gen-sign", "NONS", "Regular"}
-			},
-			wantErr: true,
+			osArgsGetter: goodOSArgsGetter,
+			wantErr:      true,
 		},
 		"invalid os args": {
-			envGetter: func(s string) string {
-				m := map[string]string{
-					"SSH_CONNECTION":       "1.2.3.4 36673 192.168.223.229 22",
-					"LOGNAME":              "user",
-					"SSH_ORIGINAL_COMMAND": "IFVer=6 SSHClientVersion=8.1 req=user@host.com HardKey=true github=false",
-				}
-				return m[s]
-			},
+			envGetter: goodEnvGetter,
 			osArgsGetter: func() []string {
 				return []string{"/usr/bin/gen-sign", "Regular"}
 			},
 			wantErr: true,
 		},
 		"invalid namespace policy": {
-			envGetter: func(s string) string {
-				m := map[string]string{
-					"SSH_CONNECTION":       "1.2.3.4 36673 192.168.223.229 22",
-					"LOGNAME":              "user",
-					"SSH_ORIGINAL_COMMAND": "IFVer=6 SSHClientVersion=8.1 req=user@host.com HardKey=true github=false",
-				}
-				return m[s]
-			},
+			envGetter: goodEnvGetter,
 			osArgsGetter: func() []string {
 				return []string{"/usr/bin/gen-sign", "trash", "Regular"}
 			},

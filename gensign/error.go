@@ -60,6 +60,7 @@ const (
 	Unknown
 	HandlerDisabled
 	HandlerAuthN
+	InvalidParams
 )
 
 // String returns the ErrorType's string representation.
@@ -67,6 +68,10 @@ func (t ErrorType) String() string {
 	switch t {
 	case HandlerDisabled:
 		return "handler is disabled"
+	case HandlerAuthN:
+		return "handler authentication error"
+	case InvalidParams:
+		return "handler receives invalid parameters"
 	default:
 		return "unknown error type"
 	}

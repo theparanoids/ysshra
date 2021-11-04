@@ -7,13 +7,16 @@ import (
 	"path"
 	"testing"
 
+	"go.vzbuilders.com/peng/sshra-oss/common"
+	"go.vzbuilders.com/peng/sshra-oss/csr/transid"
+	"go.vzbuilders.com/peng/sshra-oss/message"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 
 	"go.vzbuilders.com/peng/sshra-oss/csr"
 )
 
-func newSSHPublicKey(t *testing.T) (*rsa.PrivateKey, ssh.PublicKey) {
+func newSSHKeyPair(t *testing.T) (*rsa.PrivateKey, ssh.PublicKey) {
 	t.Helper()
 
 	const (
@@ -30,7 +33,109 @@ func newSSHPublicKey(t *testing.T) (*rsa.PrivateKey, ssh.PublicKey) {
 	return priv, pub
 }
 
+func newSSHKeyPairInAgent(t *testing.T) (*rsa.PrivateKey, ssh.PublicKey, agent.Agent) {
+	t.Helper()
+
+	priv, pub := newSSHKeyPair(t)
+	ag := agent.NewKeyring()
+	addedKey := agent.AddedKey{PrivateKey: priv}
+	if err := ag.Add(addedKey); err != nil {
+		t.Fatal(err)
+	}
+	return priv, pub, ag
+}
+
+func writePubKeyFile(t *testing.T, logName string, pubBytes []byte) string {
+	t.Helper()
+
+	tmpDir := t.TempDir()
+	if err := ioutil.WriteFile(path.Join(tmpDir, logName), pubBytes, 0400); err != nil {
+		t.Fatal(err)
+	}
+	return tmpDir
+}
+
+func TestHandler_Authenticate(t *testing.T) {
+	t.Parallel()
+
+	goodParam := &csr.ReqParam{
+		NamespacePolicy:  common.NoNamespace,
+		HandlerName:      "Regular",
+		ClientIP:         "1.2.3.4",
+		LogName:          "dummy",
+		ReqUser:          "dummy",
+		ReqHost:          "dummy.com",
+		TransID:          transid.Generate(),
+		SSHClientVersion: "8.1",
+		Attrs: &message.Attributes{
+			Username:         "dummy",
+			Hostname:         "dummy.com",
+			SSHClientVersion: "8.1",
+			HardKey:          false,
+			Touch2SSH:        false,
+			Github:           false,
+			TouchlessSudo:    nil,
+		},
+	}
+
+	tests := map[string]struct {
+		params     *csr.ReqParam
+		GetHandler func(t *testing.T) Handler
+		wantErr    bool
+	}{
+		"happy path": {
+			params: goodParam,
+			GetHandler: func(t *testing.T) Handler {
+				_, pub, ag := newSSHKeyPairInAgent(t)
+				tmpDir := writePubKeyFile(t, "dummy", pub.Marshal())
+				return Handler{
+					enabled:       true,
+					agent:         ag,
+					pubKeyDirPath: tmpDir,
+				}
+			},
+		},
+		"nil param": {
+			GetHandler: func(t *testing.T) Handler {
+				_, pub, ag := newSSHKeyPairInAgent(t)
+				tmpDir := writePubKeyFile(t, "dummy", pub.Marshal())
+				return Handler{
+					enabled:       true,
+					agent:         ag,
+					pubKeyDirPath: tmpDir,
+				}
+			},
+			wantErr: true,
+		},
+		"handler disabled": {
+			params: goodParam,
+			GetHandler: func(t *testing.T) Handler {
+				_, pub, ag := newSSHKeyPairInAgent(t)
+				tmpDir := writePubKeyFile(t, "dummy", pub.Marshal())
+				return Handler{
+					agent:         ag,
+					pubKeyDirPath: tmpDir,
+				}
+			},
+			wantErr: true,
+		},
+	}
+
+	for name, test := range tests {
+		name, test := name, test
+		t.Run(name, func(t *testing.T) {
+			t.Parallel()
+			h := test.GetHandler(t)
+			if err := h.Authenticate(test.params); (err != nil) != test.wantErr {
+				t.Errorf("challengePubKey() error = %v, wantErr %v", err, test.wantErr)
+			}
+		})
+	}
+}
+
 func TestHandler_challengePubKey(t *testing.T) {
+	t.Parallel()
+
 	tests := []struct {
 		name       string
 		GetHandler func(t *testing.T, logName string) Handler
@@ -40,18 +145,8 @@ func TestHandler_challengePubKey(t *testing.T) {
 		{
 			name: "happy path",
 			GetHandler: func(t *testing.T, logName string) Handler {
-				ag := agent.NewKeyring()
-				// generate priv/pub key
-				priv, pub := newSSHPublicKey(t)
-				addedKey := agent.AddedKey{PrivateKey: priv}
-				if err := ag.Add(addedKey); err != nil {
-					t.Fatal(err)
-				}
-				// generate public key file
-				tmpDir := t.TempDir()
-				if err := ioutil.WriteFile(path.Join(tmpDir, logName), pub.Marshal(), 0400); err != nil {
-					t.Fatal(err)
-				}
+				_, pub, ag := newSSHKeyPairInAgent(t)
+				tmpDir := writePubKeyFile(t, logName, pub.Marshal())
 				return Handler{
 					agent:         ag,
 					pubKeyDirPath: tmpDir,
@@ -62,19 +157,9 @@ func TestHandler_challengePubKey(t *testing.T) {
 		{
 			name: "pubKey mismatch (cannot sign the challenge)",
 			GetHandler: func(t *testing.T, logName string) Handler {
-				ag := agent.NewKeyring()
-				// generate priv/pub key
-				priv, _ := newSSHPublicKey(t)
-				addedKey := agent.AddedKey{PrivateKey: priv}
-				if err := ag.Add(addedKey); err != nil {
-					t.Fatal(err)
-				}
-				// generate a mis-matched public key file
-				tmpDir := t.TempDir()
-				_, mismatchedPub := newSSHPublicKey(t)
-				if err := ioutil.WriteFile(path.Join(tmpDir, logName), mismatchedPub.Marshal(), 0400); err != nil {
-					t.Fatal(err)
-				}
+				_, _, ag := newSSHKeyPairInAgent(t)
+				_, mismatchedPub := newSSHKeyPair(t)
+				tmpDir := writePubKeyFile(t, logName, mismatchedPub.Marshal())
 				return Handler{
 					agent:         ag,
 					pubKeyDirPath: tmpDir,
@@ -86,13 +171,7 @@ func TestHandler_challengePubKey(t *testing.T) {
 		{
 			name: "missing pubKey File",
 			GetHandler: func(t *testing.T, logName string) Handler {
-				ag := agent.NewKeyring()
-				// generate priv/pub key
-				priv, _ := newSSHPublicKey(t)
-				addedKey := agent.AddedKey{PrivateKey: priv}
-				if err := ag.Add(addedKey); err != nil {
-					t.Fatal(err)
-				}
+				_, _, ag := newSSHKeyPairInAgent(t)
 				return Handler{
 					agent:         ag,
 					pubKeyDirPath: "invalidPath",
@@ -104,18 +183,8 @@ func TestHandler_challengePubKey(t *testing.T) {
 		{
 			name: "invalid public key",
 			GetHandler: func(t *testing.T, logName string) Handler {
-				ag := agent.NewKeyring()
-				// generate priv/pub key
-				priv, _ := newSSHPublicKey(t)
-				addedKey := agent.AddedKey{PrivateKey: priv}
-				if err := ag.Add(addedKey); err != nil {
-					t.Fatal(err)
-				}
-				// generate a mis-matched public key file
-				tmpDir := t.TempDir()
-				if err := ioutil.WriteFile(path.Join(tmpDir, logName), []byte("invalidPubKey"), 0400); err != nil {
-					t.Fatal(err)
-				}
+				_, _, ag := newSSHKeyPairInAgent(t)
+				tmpDir := writePubKeyFile(t, logName, []byte("invalidPubKey"))
 				return Handler{
 					agent:         ag,
 					pubKeyDirPath: tmpDir,
@@ -126,7 +195,9 @@ func TestHandler_challengePubKey(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
 			h := tt.GetHandler(t, tt.logName)
 			if err := h.challengePubKey(&csr.ReqParam{LogName: tt.logName}); (err != nil) != tt.wantErr {
 				t.Errorf("challengePubKey() error = %v, wantErr %v", err, tt.wantErr)

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 
 	"golang.org/x/crypto/ssh"
@@ -57,7 +58,7 @@ func TestGetPublicKeyFromFile(t *testing.T) {
 		t.Errorf("expect \"no such file\", got %v", err)
 	}
 	_, _, err = GetPublicKeyFromFile("./testdata/empty")
-	if err == nil || err.Error() != "keys not found" {
+	if err == nil || !strings.Contains(err.Error(), "keys not found") {
 		t.Errorf("expect \"keys not found\", got %v", err)
 	}
 }

@@ -31,15 +31,14 @@ func GetPublicKeysFromBytes(data []byte) (keys []ssh.PublicKey, comments []strin
 	var comment string
 	for len(data) > 0 {
 		key, comment, _, data, err = ssh.ParseAuthorizedKey(data)
-		if err != nil {
-			return nil, nil, err
-		}
 		if key != nil {
 			keys = append(keys, key)
 			comments = append(comments, comment)
 		}
 	}
-
+	if len(keys) == 0 {
+		return nil, nil, fmt.Errorf("keys not found, got err: %v", err)
+	}
 	return keys, comments, nil
 }
 

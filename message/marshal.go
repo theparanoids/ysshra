@@ -1,13 +1,14 @@
 package message
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"strings"
 )
 
 const (
+	// TODO: cleanup following hardcoded attributes once we upgrade the gensign IFVer to 7.
 	requesterAttr          = "req"
 	hardKeyAttr            = "HardKey"
 	touch2SSHAttr          = "Touch2SSH"
@@ -18,20 +19,46 @@ const (
 	sshClientVersionAttr   = "SSHClientVersion"
 )
 
-// Marshal converts an *Attributes to a string.
+// Marshal converts an *Attributes to a json string.
 // It guarantees the output fields are all valid in format when error is nil.
-func Marshal(a *Attributes) (string, error) {
-	cmdArgs := []string{interfaceVersion}
-	if a.SSHClientVersion == "" {
-		return "", errors.New("ssh client version cannot be empty")
+func (a *Attributes) Marshal() (string, error) {
+	err := a.sanityCheck()
+	if err != nil {
+		return "", fmt.Errorf("gensign attributes sanity check failed, err: %v", err)
 	}
+
+	if a.IfVer < 7 {
+		return a.MarshalLegacy()
+	}
+
+	attrBtyes, err := json.Marshal(a)
+	if err != nil {
+		return "", fmt.Errorf("failed to marshal sshra gensign attributes: %v", err)
+	}
+	return string(attrBtyes), nil
+}
+
+// Unmarshal converts an SSH arg string to an *Attributes.
+// It guarantees the output fields are all valid in format when error is nil.
+func Unmarshal(attrsStr string) (*Attributes, error) {
+	if strings.Contains(attrsStr, legacyInterfaceVersion) {
+		return UnmarshalLegacy(attrsStr)
+	}
+	attrs := &Attributes{}
+	kidBytes := []byte(attrsStr)
+	err := json.Unmarshal(kidBytes, attrs)
+	if err != nil {
+		return nil, fmt.Errorf("fail to unmarshal attributes string: %v", err)
+	}
+	return attrs, nil
+}
+
+// MarshalLegacy converts an *Attributes to a legacy SSH arg string that concatenated by space.
+// It guarantees the output fields are all valid in format when error is nil.
+// TODO: cleanup MarshalLegacy once we upgrade the gensign IFVer to 7.
+func (a *Attributes) MarshalLegacy() (string, error) {
+	cmdArgs := []string{legacyInterfaceVersion}
 	cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%s", sshClientVersionAttr, a.SSHClientVersion))
-	if a.Username == "" {
-		return "", errors.New("user name cannot be empty")
-	}
-	if a.Hostname == "" {
-		return "", errors.New("host name cannot be empty")
-	}
 	cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%s@%s", requesterAttr, a.Username, a.Hostname))
 	if a.HardKey {
 		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%v", hardKeyAttr, a.HardKey))
@@ -47,15 +74,16 @@ func Marshal(a *Attributes) (string, error) {
 			cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%v", isFirefighterAttr, a.TouchlessSudo.IsFirefighter))
 		}
 		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%s", touchlessSudoHostsAttr, a.TouchlessSudo.TouchlessSudoHosts))
-		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%d", touchlessSudoTimeAttr, int(a.TouchlessSudo.TouchlessSudoTime.Minutes())))
+		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%d", touchlessSudoTimeAttr, int(a.TouchlessSudo.TouchlessSudoTime)))
 	}
 
 	return strings.Join(cmdArgs, " "), nil
 }
 
-// Unmarshal converts a string to an *Attributes.
+// UnmarshalLegacy converts a legacy SSH arg string to an *Attributes.
 // It guarantees the output fields are all valid in format when error is nil.
-func Unmarshal(attrsStr string) (*Attributes, error) {
+// TODO: cleanup UnmarshalLegacy once we upgrade the gensign IFVer to 7.
+func UnmarshalLegacy(attrsStr string) (*Attributes, error) {
 	attrs := parseAttrs(attrsStr)
 
 	a := &Attributes{}

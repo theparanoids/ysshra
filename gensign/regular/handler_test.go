@@ -8,12 +8,13 @@ import (
 	"testing"
 
 	"go.vzbuilders.com/peng/sshra-oss/common"
+	"go.vzbuilders.com/peng/sshra-oss/csr"
 	"go.vzbuilders.com/peng/sshra-oss/csr/transid"
+	"go.vzbuilders.com/peng/sshra-oss/gensign"
 	"go.vzbuilders.com/peng/sshra-oss/message"
+
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
-
-	"go.vzbuilders.com/peng/sshra-oss/csr"
 )
 
 func newSSHKeyPair(t *testing.T) (*rsa.PrivateKey, ssh.PublicKey) {
@@ -201,6 +202,39 @@ func TestHandler_challengePubKey(t *testing.T) {
 			h := tt.GetHandler(t, tt.logName)
 			if err := h.challengePubKey(&csr.ReqParam{LogName: tt.logName}); (err != nil) != tt.wantErr {
 				t.Errorf("challengePubKey() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestHandler_Authenticate1(t *testing.T) {
+	type fields struct {
+		BaseHandler   *gensign.BaseHandler
+		enabled       bool
+		pubKeyDirPath string
+		agent         agent.Agent
+	}
+	type args struct {
+		param *csr.ReqParam
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := &Handler{
+				BaseHandler:   tt.fields.BaseHandler,
+				enabled:       tt.fields.enabled,
+				pubKeyDirPath: tt.fields.pubKeyDirPath,
+				agent:         tt.fields.agent,
+			}
+			if err := h.Authenticate(tt.args.param); (err != nil) != tt.wantErr {
+				t.Errorf("Authenticate() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

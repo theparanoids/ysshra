@@ -12,20 +12,24 @@ type Attributes struct {
 	Hostname string `json:"hostname"`
 	// SSHClientVersion is the ssh version on the requester host. Required.
 	SSHClientVersion string `json:"sshClientVersion"`
+	// SignatureAlgo is the signing algorithm of the requested certificate.
+	SignatureAlgo int `json:"signatureAlgo"`
 	// HardKey indicates whether the request is associated to a public key backed in a smartcard hardware.
-	HardKey       bool           `json:"hardKey"`
-	Touch2SSH     bool           `json:"touch2SSH"`
-	Github        bool           `json:"github"`
-	Nonce         bool           `json:"nonce"`
-	TouchlessSudo *TouchlessSudo `json:"touchlessSudo"`
+	HardKey bool `json:"hardKey"`
+	// Touch2SSH indicates whether the requested certificate requires a touch during SSH login challenge.
+	Touch2SSH bool `json:"touch2SSH"`
+	// TouchlessSudo indicates whether the requested certificate is touchless during SUDO challenge.
+	TouchlessSudo *TouchlessSudo `json:"touchlessSudo,omitempty"`
+	// Exts contains the extended key value mappings. It is useful to add extra fields for specific handlers or modules.
+	Exts map[string]interface{} `json:"exts,omitempty"`
 }
 
 // TouchlessSudo stores information that client passes to RA about touchless sudo.
 type TouchlessSudo struct {
 	// IsFirefighter indicates whether the requested certificate should be a firefighter cert or not.
 	IsFirefighter bool `json:"isFirefighter"`
-	// TouchlessSudoHosts are the destination host list that accept the requested touchless certificate.
-	TouchlessSudoHosts string `json:"touchlessSudoHosts"`
-	// TouchlessSudoTime indicates the valid time period of the touchless certificate (in minutes).
-	TouchlessSudoTime int64 `json:"touchlessSudoTime"`
+	// Hosts are the destination host list that accept the requested touchless certificate.
+	Hosts string `json:"hosts"`
+	// Time indicates the valid time period of the touchless certificate (in minutes).
+	Time int64 `json:"time"`
 }

@@ -9,13 +9,13 @@ import (
 
 const (
 	// TODO: cleanup following hardcoded attributes once we upgrade the gensign IFVer to 7.
+	ifVerAttr              = "IFVer"
 	requesterAttr          = "req"
 	hardKeyAttr            = "HardKey"
 	touch2SSHAttr          = "Touch2SSH"
-	githubAttr             = "github"
 	isFirefighterAttr      = "IsFirefighter"
-	touchlessSudoHostsAttr = "TouchlessSudoHosts"
-	touchlessSudoTimeAttr  = "TouchlessSudoTime"
+	touchlessSudoHostsAttr = "Hosts"
+	touchlessSudoTimeAttr  = "Time"
 	sshClientVersionAttr   = "SSHClientVersion"
 )
 
@@ -27,30 +27,65 @@ func (a *Attributes) Marshal() (string, error) {
 		return "", fmt.Errorf("gensign attributes sanity check failed, err: %v", err)
 	}
 
+	// TODO: cleanup MarshalLegacy once we upgrade the gensign IFVer to 7.
 	if a.IfVer < 7 {
 		return a.MarshalLegacy()
 	}
 
-	attrBtyes, err := json.Marshal(a)
+	attrBytes, err := json.Marshal(a)
 	if err != nil {
 		return "", fmt.Errorf("failed to marshal sshra gensign attributes: %v", err)
 	}
-	return string(attrBtyes), nil
+	return string(attrBytes), nil
 }
 
 // Unmarshal converts an SSH arg string to an *Attributes.
 // It guarantees the output fields are all valid in format when error is nil.
 func Unmarshal(attrsStr string) (*Attributes, error) {
-	if strings.Contains(attrsStr, legacyInterfaceVersion) {
+	attrs := &Attributes{}
+	if err := json.Unmarshal([]byte(attrsStr), &attrs); err != nil {
+		// TODO: cleanup UnmarshalLegacy once we upgrade the gensign IFVer to 7.
 		return UnmarshalLegacy(attrsStr)
 	}
-	attrs := &Attributes{}
-	kidBytes := []byte(attrsStr)
-	err := json.Unmarshal(kidBytes, attrs)
-	if err != nil {
-		return nil, fmt.Errorf("fail to unmarshal attributes string: %v", err)
-	}
 	return attrs, nil
+}
+
+// ExtendedAttr looks up the value of the key from the extended attributes.
+func (a *Attributes) ExtendedAttr(key string) (interface{}, error) {
+	val, ok := a.Exts[key]
+	if !ok {
+		return nil, fmt.Errorf("%v not found in the extended attributes", key)
+	}
+	return val, nil
+}
+
+// ExtendedAttrStr looks up the value of the key from the extended attributes.
+// Return the value in string type.
+func (a *Attributes) ExtendedAttrStr(key string) (string, error) {
+	attr, _ := a.ExtendedAttr(key)
+	str, ok := attr.(string)
+	if !ok {
+		return "", fmt.Errorf("string for %v not found in the extended attributes", key)
+	}
+	return str, nil
+}
+
+// ExtendedAttrBool looks up the value of the key from the extended attributes.
+// Return the value in bool type.
+func (a *Attributes) ExtendedAttrBool(key string) (bool, error) {
+	attr, err := a.ExtendedAttr(key)
+	if err != nil {
+		return false, err
+	}
+	b, ok := attr.(bool)
+	if ok {
+		return b, nil
+	}
+	str, ok := attr.(string)
+	if ok {
+		return strconv.ParseBool(str)
+	}
+	return false, fmt.Errorf("value of %v in the extended attributes is not bool type, got %v", key, attr)
 }
 
 // MarshalLegacy converts an *Attributes to a legacy SSH arg string that concatenated by space.
@@ -66,15 +101,13 @@ func (a *Attributes) MarshalLegacy() (string, error) {
 	if a.Touch2SSH {
 		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%v", touch2SSHAttr, a.Touch2SSH))
 	}
-	// Client >= 2.5.1 should always pass github= argument so server can tell it's newer version
-	cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%v", githubAttr, a.Github))
 
 	if a.TouchlessSudo != nil {
 		if a.TouchlessSudo.IsFirefighter {
 			cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%v", isFirefighterAttr, a.TouchlessSudo.IsFirefighter))
 		}
-		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%s", touchlessSudoHostsAttr, a.TouchlessSudo.TouchlessSudoHosts))
-		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%d", touchlessSudoTimeAttr, int(a.TouchlessSudo.TouchlessSudoTime)))
+		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%s", touchlessSudoHostsAttr, a.TouchlessSudo.Hosts))
+		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%d", touchlessSudoTimeAttr, int(a.TouchlessSudo.Time)))
 	}
 
 	return strings.Join(cmdArgs, " "), nil
@@ -84,9 +117,16 @@ func (a *Attributes) MarshalLegacy() (string, error) {
 // It guarantees the output fields are all valid in format when error is nil.
 // TODO: cleanup UnmarshalLegacy once we upgrade the gensign IFVer to 7.
 func UnmarshalLegacy(attrsStr string) (*Attributes, error) {
-	attrs := parseAttrs(attrsStr)
+	attrs := parseAttrsLegacy(attrsStr)
 
-	a := &Attributes{}
+	a := &Attributes{
+		Exts: map[string]interface{}{},
+	}
+
+	if val, ok := attrs[ifVerAttr]; ok {
+		a.IfVer, _ = strconv.Atoi(val)
+	}
+
 	// TODO: Return error when ssh client version is empty. Now not every client sends this attribute.
 	a.SSHClientVersion = attrs[sshClientVersionAttr]
 
@@ -102,25 +142,35 @@ func UnmarshalLegacy(attrsStr string) (*Attributes, error) {
 	a.Username = fields[0]
 	a.Hostname = fields[1]
 
-	if _, ok := attrs[hardKeyAttr]; ok {
-		a.HardKey = true
+	if val, ok := attrs[hardKeyAttr]; ok {
+		a.HardKey, _ = strconv.ParseBool(val)
 	}
 
-	if _, ok := attrs[touch2SSHAttr]; ok {
-		a.Touch2SSH = true
+	if val, ok := attrs[touch2SSHAttr]; ok {
+		a.Touch2SSH, _ = strconv.ParseBool(val)
 	}
 
-	var err error
-	if a.Github, err = strconv.ParseBool(attrs[githubAttr]); err != nil {
-		return nil, err
+	t := &TouchlessSudo{}
+	if val, ok := attrs[isFirefighterAttr]; ok {
+		t.IsFirefighter, _ = strconv.ParseBool(val)
 	}
 
-	// TODO: marshal touchless sudo fields
+	if val, ok := attrs[touchlessSudoHostsAttr]; ok {
+		t.Hosts = val
+	}
+
+	if val, ok := attrs[touchlessSudoTimeAttr]; ok {
+		t.Time, _ = strconv.ParseInt(val, 10, 0)
+	}
+
+	for key, val := range attrs {
+		a.Exts[key] = val
+	}
 
 	return a, nil
 }
 
-func parseAttrs(attrsStr string) map[string]string {
+func parseAttrsLegacy(attrsStr string) map[string]string {
 	attrs := map[string]string{}
 	attributes := strings.Split(attrsStr, " ")
 	for _, attribute := range attributes {

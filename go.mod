@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/Microsoft/go-winio v0.5.0
-	github.com/mitchellh/mapstructure v1.3.2
+	github.com/mitchellh/mapstructure v1.4.1
 	github.com/theparanoids/crypki v1.2.2
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
 )

@@ -1,6 +1,7 @@
 package csr
 
 import (
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"net"
@@ -9,6 +10,7 @@ import (
 	"go.vzbuilders.com/peng/sshra-oss/common"
 	"go.vzbuilders.com/peng/sshra-oss/csr/transid"
 	"go.vzbuilders.com/peng/sshra-oss/message"
+	"go.vzbuilders.com/peng/sshra-oss/sshutils/version"
 )
 
 // ReqParam stores options to invoke gensign.Handler.
@@ -27,16 +29,19 @@ type ReqParam struct {
 	// Users may define their own handler names.
 	HandlerName string
 	ClientIP    string
-	LogName     string
+	// LogName is the name of the user who is currently interacts with the current SSHD server.
+	LogName string
 	// ReqUser is the user name that sends request to RA.
 	ReqUser string
 	// ReqHost is the user host name that sends request to RA.
 	ReqHost string
 	// TransID stands for transaction ID and serves as the unique identifier for a request.
 	// It should be generated on server-side right after receiving client request.
-	TransID          string
-	SSHClientVersion string
-
+	TransID string
+	// SSHClientVersion is the version of the SSH Client.
+	SSHClientVersion version.Version
+	// SignatureAlgo is the signing algorithm of the requested certificate.
+	SignatureAlgo x509.SignatureAlgorithm
 	// Attrs stores information that client passes to RA, containing attributes of SSH certificate that the client requests for.
 	Attrs *message.Attributes
 }
@@ -69,6 +74,14 @@ func NewReqParam(envGetter func(string) string, osArgsGetter func() []string) (*
 		return nil, err
 	}
 
+	sshClientVersion := version.NewDefaultVersion()
+	if reqAttrs.SSHClientVersion != "" {
+		sshClientVersion, err = version.Unmarshal(reqAttrs.SSHClientVersion)
+		if err != nil {
+			return nil, fmt.Errorf(`failed to unmarshal client version from SSHClientVersion=%q`, reqAttrs.SSHClientVersion)
+		}
+	}
+
 	return &ReqParam{
 		NamespacePolicy:  namespacePolicy,
 		HandlerName:      handlerName,
@@ -77,7 +90,8 @@ func NewReqParam(envGetter func(string) string, osArgsGetter func() []string) (*
 		ReqUser:          reqAttrs.Username,
 		ReqHost:          reqAttrs.Hostname,
 		TransID:          transid.Generate(),
-		SSHClientVersion: reqAttrs.SSHClientVersion,
+		SSHClientVersion: sshClientVersion,
+		SignatureAlgo:    x509.SignatureAlgorithm(reqAttrs.SignatureAlgo),
 		Attrs:            reqAttrs,
 	}, nil
 }

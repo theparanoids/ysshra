@@ -98,17 +98,26 @@ func NewReqParam(envGetter func(string) string, osArgsGetter func() []string) (*
 
 // parseForceCommand parses the command that invokes gensign and gets namespace policy and handler name.
 // A valid command will be like this:
-// /usr/bin/gen-sign $NAMESPACE_POLICY $HANDLER_KEYWORD
+// /usr/bin/gensign $NAMESPACE_POLICY $HANDLER_KEYWORD
 func parseForceCommand(osArgs []string) (common.NamespacePolicy, string, error) {
-	l := len(osArgs)
+	// If /usr/bin/gensign is executed by OpenSSHD behind `ForceCommand`, then the command would be invoked by
+	// using the user's login shell with the -c option.
+	// Hence, we need to parse each argument from osArgs.
+	// A typical invocation from OpenSSHD: ["gensign", "-c", "/usr/bin/gensign $NAMESPACE_POLICY $HANDLER_KEYWORD"]
+	var args []string
+	for _, osArg := range osArgs {
+		args = append(args, strings.Split(osArg, " ")...)
+	}
+
+	l := len(args)
 	if l < 3 {
-		return "", "", fmt.Errorf("failed to get namespace policy and handler name from force command: %q", strings.Join(osArgs, " "))
+		return "", "", fmt.Errorf("failed to get namespace policy and handler name from force command: %q", strings.Join(args, " "))
 	}
-	namespacePolicy := common.NamespacePolicy(osArgs[l-2])
+	namespacePolicy := common.NamespacePolicy(args[l-2])
 	if !common.ValidNamespacePolicy(namespacePolicy) {
-		return "", "", fmt.Errorf("failed to get valid namespace policy from force command: %q", strings.Join(osArgs, " "))
+		return "", "", fmt.Errorf("failed to validate namespace policy %q from force command: %q", namespacePolicy, strings.Join(args, " "))
 	}
-	return namespacePolicy, osArgs[l-1], nil
+	return namespacePolicy, args[l-1], nil
 }
 
 // Validate is a standard way for handlers to validate the input ReqParam so that we do not need to implement the input

@@ -96,6 +96,7 @@ func TestMarshal(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+			tt.attrs.populate()
 			if !reflect.DeepEqual(tt.attrs, mm) {
 				t.Fatalf("expect: %+v, got: %+v", tt.attrs, mm)
 			}
@@ -112,8 +113,7 @@ func TestMarshalLegacy(t *testing.T) {
 		SSHClientVersion: "8.1",
 		HardKey:          true,
 		Touch2SSH:        false,
-		// TODO: test marshal and unmarshal of TouchlessSudo.
-		TouchlessSudo: nil,
+		TouchlessSudo:    &TouchlessSudo{},
 		Exts: map[string]interface{}{
 			"HardKey":          "true",
 			"IFVer":            "6",
@@ -135,6 +135,34 @@ func TestMarshalLegacy(t *testing.T) {
 	}
 	if !reflect.DeepEqual(a, mm) {
 		t.Fatalf("expect: %+v, got: %+v", a, mm)
+	}
+}
+
+func TestUnmarshaHeadlesslLegacy(t *testing.T) {
+	t.Parallel()
+	args := "IFVer=6 SSHClientVersion=8.1 req=user@host.com HardKey=true privKeyNeeded"
+	got, err := Unmarshal(args)
+	if err != nil {
+		t.Fatalf("got err: %v\n", err)
+	}
+	want := &Attributes{
+		IfVer:            6,
+		Username:         "user",
+		Hostname:         "host.com",
+		SSHClientVersion: "8.1",
+		HardKey:          true,
+		Touch2SSH:        false,
+		TouchlessSudo:    &TouchlessSudo{},
+		Exts: map[string]interface{}{
+			"HardKey":          "true",
+			"IFVer":            "6",
+			"SSHClientVersion": "8.1",
+			"req":              "user@host.com",
+			"privKeyNeeded":    "",
+		},
+	}
+	if !reflect.DeepEqual(want, got) {
+		t.Fatalf("expect: %+v, got: %+v", want, got)
 	}
 }
 

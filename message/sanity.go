@@ -14,3 +14,9 @@ func (a *Attributes) sanityCheck() error {
 	}
 	return nil
 }
+
+func (a *Attributes) populate() {
+	if a.TouchlessSudo == nil {
+		a.TouchlessSudo = &TouchlessSudo{}
+	}
+}

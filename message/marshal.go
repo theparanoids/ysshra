@@ -47,16 +47,27 @@ func Unmarshal(attrsStr string) (*Attributes, error) {
 		// TODO: cleanup UnmarshalLegacy once we upgrade the gensign IFVer to 7.
 		return UnmarshalLegacy(attrsStr)
 	}
+	err := attrs.sanityCheck()
+	if err != nil {
+		return nil, fmt.Errorf("gensign attributes sanity check failed, err: %v", err)
+	}
+	attrs.populate()
 	return attrs, nil
 }
 
 // ExtendedAttr looks up the value of the key from the extended attributes.
 func (a *Attributes) ExtendedAttr(key string) (interface{}, error) {
 	val, ok := a.Exts[key]
-	if !ok {
-		return nil, fmt.Errorf("%v not found in the extended attributes", key)
+	if ok {
+		return val, nil
 	}
-	return val, nil
+	// TODO: remove following case insensitive key comparison once we upgrade the gensign IFVer to 7.
+	for extKey, extVal := range a.Exts {
+		if strings.EqualFold(extKey, key) {
+			return extVal, nil
+		}
+	}
+	return nil, fmt.Errorf("%v not found in the extended attributes", key)
 }
 
 // ExtendedAttrStr looks up the value of the key from the extended attributes.
@@ -106,8 +117,12 @@ func (a *Attributes) MarshalLegacy() (string, error) {
 		if a.TouchlessSudo.IsFirefighter {
 			cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%v", isFirefighterAttr, a.TouchlessSudo.IsFirefighter))
 		}
-		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%s", touchlessSudoHostsAttr, a.TouchlessSudo.Hosts))
-		cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%d", touchlessSudoTimeAttr, int(a.TouchlessSudo.Time)))
+		if len(a.TouchlessSudo.Hosts) != 0 {
+			cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%s", touchlessSudoHostsAttr, a.TouchlessSudo.Hosts))
+		}
+		if a.TouchlessSudo.Time != 0 {
+			cmdArgs = append(cmdArgs, fmt.Sprintf("%s=%d", touchlessSudoTimeAttr, int(a.TouchlessSudo.Time)))
+		}
 	}
 
 	return strings.Join(cmdArgs, " "), nil
@@ -162,6 +177,7 @@ func UnmarshalLegacy(attrsStr string) (*Attributes, error) {
 	if val, ok := attrs[touchlessSudoTimeAttr]; ok {
 		t.Time, _ = strconv.ParseInt(val, 10, 0)
 	}
+	a.TouchlessSudo = t
 
 	for key, val := range attrs {
 		a.Exts[key] = val
@@ -170,6 +186,7 @@ func UnmarshalLegacy(attrsStr string) (*Attributes, error) {
 	return a, nil
 }
 
+// TODO: cleanup parseAttrsLegacy once we upgrade the gensign IFVer to 7.
 func parseAttrsLegacy(attrsStr string) map[string]string {
 	attrs := map[string]string{}
 	attributes := strings.Split(attrsStr, " ")

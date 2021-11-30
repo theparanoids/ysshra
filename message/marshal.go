@@ -14,8 +14,8 @@ const (
 	hardKeyAttr            = "HardKey"
 	touch2SSHAttr          = "Touch2SSH"
 	isFirefighterAttr      = "IsFirefighter"
-	touchlessSudoHostsAttr = "Hosts"
-	touchlessSudoTimeAttr  = "Time"
+	touchlessSudoHostsAttr = "TouchlessSudoHosts"
+	touchlessSudoTimeAttr  = "TouchlessSudoTime"
 	sshClientVersionAttr   = "SSHClientVersion"
 )
 

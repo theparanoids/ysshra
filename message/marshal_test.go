@@ -106,39 +106,79 @@ func TestMarshal(t *testing.T) {
 
 func TestMarshalLegacy(t *testing.T) {
 	t.Parallel()
-	a := &Attributes{
-		IfVer:            6,
-		Username:         "user",
-		Hostname:         "host.com",
-		SSHClientVersion: "8.1",
-		HardKey:          true,
-		Touch2SSH:        false,
-		TouchlessSudo:    &TouchlessSudo{},
-		Exts: map[string]interface{}{
-			"HardKey":          "true",
-			"IFVer":            "6",
-			"SSHClientVersion": "8.1",
-			"req":              "user@host.com",
+	tests := []struct {
+		name  string
+		attrs *Attributes
+		want  string
+	}{
+		{
+			name: "simple path",
+			attrs: &Attributes{
+				IfVer:            6,
+				Username:         "user",
+				Hostname:         "host.com",
+				SSHClientVersion: "8.1",
+				HardKey:          true,
+				Touch2SSH:        false,
+				TouchlessSudo:    &TouchlessSudo{},
+				Exts: map[string]interface{}{
+					"HardKey":          "true",
+					"IFVer":            "6",
+					"SSHClientVersion": "8.1",
+					"req":              "user@host.com",
+				},
+			},
+			want: "IFVer=6 SSHClientVersion=8.1 req=user@host.com HardKey=true",
+		},
+		{
+			name: "touchless sudo",
+			attrs: &Attributes{
+				IfVer:            6,
+				Username:         "user",
+				Hostname:         "host.com",
+				SSHClientVersion: "8.1",
+				HardKey:          true,
+				Touch2SSH:        false,
+				TouchlessSudo: &TouchlessSudo{
+					IsFirefighter: true,
+					Hosts:         "host01,host02,host03",
+					Time:          int64(30),
+				},
+				Exts: map[string]interface{}{
+					"HardKey":            "true",
+					"IFVer":              "6",
+					"SSHClientVersion":   "8.1",
+					"req":                "user@host.com",
+					"TouchlessSudoHosts": "host01,host02,host03",
+					"IsFirefighter":      "true",
+					"TouchlessSudoTime":  "30",
+				},
+			},
+			want: "IFVer=6 SSHClientVersion=8.1 req=user@host.com HardKey=true IsFirefighter=true TouchlessSudoHosts=host01,host02,host03 TouchlessSudoTime=30",
 		},
 	}
-	s, err := a.Marshal()
-	if err != nil {
-		t.Fatal(err)
-	}
-	want := "IFVer=6 SSHClientVersion=8.1 req=user@host.com HardKey=true"
-	if s != want {
-		t.Fatalf("expect: %q, got: %q\n", want, s)
-	}
-	mm, err := Unmarshal(s)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !reflect.DeepEqual(a, mm) {
-		t.Fatalf("expect: %+v, got: %+v", a, mm)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			s, err := tt.attrs.Marshal()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if s != tt.want {
+				t.Fatalf("expect: %q, got: %q\n", tt.want, s)
+			}
+			mm, err := Unmarshal(s)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(tt.attrs, mm) {
+				t.Fatalf("expect: %+v, got: %+v", tt.attrs, mm)
+			}
+		})
 	}
 }
 
-func TestUnmarshaHeadlesslLegacy(t *testing.T) {
+func TestUnmarshalHeadlesslLegacy(t *testing.T) {
 	t.Parallel()
 	args := "IFVer=6 SSHClientVersion=8.1 req=user@host.com HardKey=true privKeyNeeded"
 	got, err := Unmarshal(args)

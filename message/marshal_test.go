@@ -1,6 +1,7 @@
 package message
 
 import (
+	"crypto/x509"
 	"reflect"
 	"testing"
 )
@@ -23,13 +24,35 @@ func TestMarshal(t *testing.T) {
 				HardKey:          true,
 				Touch2SSH:        false,
 				TouchlessSudo:    nil,
-				SignatureAlgo:    1,
+				PubKeyAlgo:       x509.PublicKeyAlgorithm(1),
+				SignatureAlgo:    x509.SignatureAlgorithm(1),
 				Exts: map[string]interface{}{
 					"field1": "value1",
 					"field2": float64(100),
 				},
 			},
-			want: `{"ifVer":7,"username":"user","hostname":"host.com","sshClientVersion":"8.1","signatureAlgo":1,"hardKey":true,"touch2SSH":false,"exts":{"field1":"value1","field2":100}}`,
+			want: `{"ifVer":7,"username":"user","hostname":"host.com","sshClientVersion":"8.1","pubKeyAlgo":1,"signatureAlgo":1,"hardKey":true,"exts":{"field1":"value1","field2":100}}`,
+		},
+		{
+			name: "TouchlessSudo empty",
+			attrs: &Attributes{
+				IfVer:            7,
+				Username:         "user",
+				Hostname:         "host.com",
+				SSHClientVersion: "8.1",
+				HardKey:          true,
+				Touch2SSH:        false,
+				TouchlessSudo: &TouchlessSudo{
+					IsFirefighter: false,
+					Hosts:         "",
+					Time:          0,
+				},
+				Exts: map[string]interface{}{
+					"field1": "value1",
+					"field2": float64(100),
+				},
+			},
+			want: `{"ifVer":7,"username":"user","hostname":"host.com","sshClientVersion":"8.1","hardKey":true,"touchlessSudo":{},"exts":{"field1":"value1","field2":100}}`,
 		},
 		{
 			name: "TouchlessSudo test case",
@@ -50,7 +73,7 @@ func TestMarshal(t *testing.T) {
 					"field2": float64(100),
 				},
 			},
-			want: `{"ifVer":7,"username":"user","hostname":"host.com","sshClientVersion":"8.1","signatureAlgo":0,"hardKey":true,"touch2SSH":false,"touchlessSudo":{"isFirefighter":true,"hosts":"host01,host02,host03","time":30},"exts":{"field1":"value1","field2":100}}`,
+			want: `{"ifVer":7,"username":"user","hostname":"host.com","sshClientVersion":"8.1","hardKey":true,"touchlessSudo":{"isFirefighter":true,"hosts":"host01,host02,host03","time":30},"exts":{"field1":"value1","field2":100}}`,
 		},
 		{
 			name: "client version empty error",

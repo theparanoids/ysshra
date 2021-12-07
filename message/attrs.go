@@ -16,9 +16,9 @@ type Attributes struct {
 	Hostname string `json:"hostname"`
 	// SSHClientVersion is the ssh version on the requester host. Required.
 	SSHClientVersion string `json:"sshClientVersion"`
-	// PubKeyAlgo is to specify the CA public key algorithm for the requested certificate.
+	// CAPubKeyAlgo is to specify the CA public key algorithm for the requested certificate.
 	// It would be mapped to an identifier string of a key slot in CA.
-	PubKeyAlgo x509.PublicKeyAlgorithm `json:"pubKeyAlgo,omitempty"`
+	CAPubKeyAlgo x509.PublicKeyAlgorithm `json:"caPubKeyAlgo,omitempty"`
 	// SignatureAlgo is the signing algorithm of the requested certificate. (Not implemented.)
 	SignatureAlgo x509.SignatureAlgorithm `json:"signatureAlgo,omitempty"`
 	// HardKey indicates whether the request is associated to a public key backed in a smartcard hardware.

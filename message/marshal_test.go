@@ -24,14 +24,14 @@ func TestMarshal(t *testing.T) {
 				HardKey:          true,
 				Touch2SSH:        false,
 				TouchlessSudo:    nil,
-				PubKeyAlgo:       x509.PublicKeyAlgorithm(1),
+				CAPubKeyAlgo:     x509.PublicKeyAlgorithm(1),
 				SignatureAlgo:    x509.SignatureAlgorithm(1),
 				Exts: map[string]interface{}{
 					"field1": "value1",
 					"field2": float64(100),
 				},
 			},
-			want: `{"ifVer":7,"username":"user","hostname":"host.com","sshClientVersion":"8.1","pubKeyAlgo":1,"signatureAlgo":1,"hardKey":true,"exts":{"field1":"value1","field2":100}}`,
+			want: `{"ifVer":7,"username":"user","hostname":"host.com","sshClientVersion":"8.1","caPubKeyAlgo":1,"signatureAlgo":1,"hardKey":true,"exts":{"field1":"value1","field2":100}}`,
 		},
 		{
 			name: "TouchlessSudo empty",

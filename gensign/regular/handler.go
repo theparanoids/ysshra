@@ -3,7 +3,6 @@ package regular
 import (
 	"crypto/rand"
 	"fmt"
-	"log"
 	"net"
 	"os"
 	"path"
@@ -23,7 +22,7 @@ import (
 
 const (
 	// HandlerName is a unique name to identify a handler.
-	HandlerName = "Regular"
+	HandlerName = "paranoids.regular"
 	// IsForHumanUser indicates whether this handler should be used for a human user.
 	IsForHumanUser         = true
 	defaultCertValiditySec = 12 * 3600 // 12 hours
@@ -32,8 +31,6 @@ const (
 // Handler implements gensign.Handler.
 type Handler struct {
 	*gensign.BaseHandler
-	// enabled indicates whether the handler is enabled or not.
-	enabled bool
 	// pubKeyDirPath specifies the directory path which stores users' public keys.
 	pubKeyDirPath string
 	agent         ag.Agent
@@ -41,20 +38,18 @@ type Handler struct {
 
 // NewHandler creates a certificate broker via the ssh connection,
 // and constructs a gensign.Handler containing the options loaded from conf.
-func NewHandler(gensignConf *config.GensignConfig, conn net.Conn) gensign.Handler {
+func NewHandler(gensignConf *config.GensignConfig, conn net.Conn) (gensign.Handler, error) {
 	c := new(conf)
 	if err := gensignConf.ExtractHandlerConf(HandlerName, c); err != nil {
-		log.Printf("Warning: failed to initiialize handler %q, disabled the handler by default, err: %v", HandlerName, err)
-		return &Handler{enabled: false}
+		return nil, fmt.Errorf("failed to initiialize handler %q, err: %v", HandlerName, err)
 	}
 
 	b := broker.NewSSHCertBroker(conn)
 	return &Handler{
 		BaseHandler:   gensign.NewBaseHandler(b, HandlerName, IsForHumanUser),
-		enabled:       c.Enable,
 		pubKeyDirPath: c.PubKeyDir,
 		agent:         ag.NewClient(conn),
-	}
+	}, nil
 }
 
 // TODO: rewrite the comment here. The comment may not include OTP.
@@ -70,10 +65,6 @@ func (h *Handler) Authenticate(param *csr.ReqParam) error {
 	}
 	if param.Attrs.HardKey {
 		return gensign.NewErrorWithMsg(gensign.HandlerAuthN, HandlerName, "do not support hard key validation")
-	}
-
-	if !h.enabled {
-		return gensign.NewError(gensign.HandlerDisabled, HandlerName)
 	}
 
 	if err := h.challengePubKey(param); err != nil {

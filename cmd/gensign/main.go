@@ -15,6 +15,10 @@ import (
 // TODO: specify a config path.
 const confPath = ""
 
+var handlerCreators = map[string]gensign.CreateHandler{
+	regular.HandlerName: regular.NewHandler,
+}
+
 func main() {
 	conf, err := config.NewGensignConfig(confPath)
 	if err != nil {
@@ -27,8 +31,21 @@ func main() {
 		log.Fatalf("failed to initailize the connection for ssh agent, %v", err)
 	}
 
-	handlers := []gensign.Handler{
-		regular.NewHandler(conf, conn),
+	var handlers []gensign.Handler
+	// Create Handler by the configuration.
+	for hName, _ := range conf.HandlerConfig {
+		// Lookup creator by the handler mapping.
+		create, ok := handlerCreators[hName]
+		if !ok {
+			log.Printf("warning: %v", err)
+			continue
+		}
+		handler, err := create(conf, conn)
+		if err != nil {
+			log.Printf("warning: %v", err)
+			continue
+		}
+		handlers = append(handlers, handler)
 	}
 
 	reqParam, err := csr.NewReqParam(os.Getenv, func() []string {

@@ -88,26 +88,12 @@ func TestHandler_Authenticate(t *testing.T) {
 				_, pub, ag := newSSHKeyPairInAgent(t)
 				tmpDir := writePubKeyFile(t, "dummy", pub.Marshal())
 				return Handler{
-					enabled:       true,
 					agent:         ag,
 					pubKeyDirPath: tmpDir,
 				}
 			},
 		},
 		"nil param": {
-			GetHandler: func(t *testing.T) Handler {
-				_, pub, ag := newSSHKeyPairInAgent(t)
-				tmpDir := writePubKeyFile(t, "dummy", pub.Marshal())
-				return Handler{
-					enabled:       true,
-					agent:         ag,
-					pubKeyDirPath: tmpDir,
-				}
-			},
-			wantErr: true,
-		},
-		"handler disabled": {
-			params: goodParam,
 			GetHandler: func(t *testing.T) Handler {
 				_, pub, ag := newSSHKeyPairInAgent(t)
 				tmpDir := writePubKeyFile(t, "dummy", pub.Marshal())

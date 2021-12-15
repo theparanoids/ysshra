@@ -6,10 +6,10 @@ import (
 
 	"go.vzbuilders.com/peng/sshra-oss/agent/ssh"
 	"go.vzbuilders.com/peng/sshra-oss/config"
+	"go.vzbuilders.com/peng/sshra-oss/crypki"
 	"go.vzbuilders.com/peng/sshra-oss/csr"
 	"go.vzbuilders.com/peng/sshra-oss/gensign"
 	"go.vzbuilders.com/peng/sshra-oss/gensign/regular"
-	"go.vzbuilders.com/peng/sshra-oss/internal/cert/signer"
 )
 
 // TODO: specify a config path.
@@ -54,7 +54,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := gensign.Run(reqParam, handlers, signer.NewCrypkiSigner(conf)); err != nil {
+	if err := gensign.Run(reqParam, handlers, crypki.NewSignerWithGensignConf(*conf)); err != nil {
 		log.Fatal(err)
 	}
 }

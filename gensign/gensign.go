@@ -1,6 +1,7 @@
 package gensign
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"runtime/debug"
@@ -10,7 +11,12 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
+const timeout = 60 * time.Second
+
 func Run(params *csr.ReqParam, handlers []Handler, signer csr.Signer) (err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+
 	// Prepare for panic logs
 	defer func() {
 		if r := recover(); r != nil {
@@ -46,12 +52,12 @@ func Run(params *csr.ReqParam, handlers []Handler, signer csr.Signer) (err error
 	var certs []ssh.PublicKey
 	var comments []string
 	for _, csr := range sshCSRs {
-		cert, comment, err := signer.Sign(params.TransID, csr)
+		cert, comment, err := signer.Sign(ctx, csr)
 		if err != nil {
 			return fmt.Errorf(`gensign: id=%q, msg="failed to sign CSR", err=%q"`, params.TransID, err)
 		}
-		certs = append(certs, cert)
-		comments = append(comments, comment)
+		certs = append(certs, cert...)
+		comments = append(comments, comment...)
 	}
 	err = handler.UpdateCerts(certs, comments)
 	if err != nil {

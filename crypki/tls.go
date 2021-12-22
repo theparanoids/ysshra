@@ -7,7 +7,8 @@ import (
 	"os"
 )
 
-func tlsConfiguration(conf *SignerConfig) (*tls.Config, error) {
+// TLSConfiguration creates a new SignerConfig for tls connection.
+func TLSConfiguration(conf *SignerConfig) (*tls.Config, error) {
 	// Load TLS client cert.
 	cert, err := tls.LoadX509KeyPair(conf.TLSClientCertFile, conf.TLSClientKeyFile)
 	if err != nil {

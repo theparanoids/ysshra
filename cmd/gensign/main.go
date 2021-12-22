@@ -54,7 +54,13 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := gensign.Run(reqParam, handlers, crypki.NewSignerWithGensignConf(*conf)); err != nil {
+
+	signer, err := crypki.NewSignerWithGensignConf(*conf)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	if err := gensign.Run(reqParam, handlers, signer); err != nil {
 		log.Fatal(err)
 	}
 }

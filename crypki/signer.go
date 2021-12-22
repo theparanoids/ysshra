@@ -12,6 +12,7 @@ import (
 	pb "github.com/theparanoids/crypki/proto"
 	"go.vzbuilders.com/peng/sshra-oss/config"
 	"go.vzbuilders.com/peng/sshra-oss/internal/backoff"
+	"go.vzbuilders.com/peng/sshra-oss/internal/validate"
 	"go.vzbuilders.com/peng/sshra-oss/sshutils/key"
 	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"
@@ -28,18 +29,18 @@ const (
 // SignerConfig contains the signer data from the config file.
 type SignerConfig struct {
 	// TLSClientKeyFile is the client key to authenticate requestor's identity at Crypki.
-	TLSClientKeyFile string `mapstructure:"tls_client_key_file"`
+	TLSClientKeyFile string `mapstructure:"tls_client_key_file" validate:"required"`
 	// TLSClientKeyFile is the client cert to authenticate requestor's identity at Crypki.
-	TLSClientCertFile string `mapstructure:"tls_client_cert_file"`
+	TLSClientCertFile string `mapstructure:"tls_client_cert_file" validate:"required"`
 	// TLSCACertFiles is the list of certification authority certs to verify Crypki server cert.
-	TLSCACertFiles []string `mapstructure:"tls_ca_cert_files"`
+	TLSCACertFiles []string `mapstructure:"tls_ca_cert_files" validate:"required"`
 	// CrypkiEndpoints is the endpoint list of the crypki servers.
 	// It is recommended to put IPs or secondary DNS name into the list.
 	// Signer tries to send the certificate request to the crypki server in the order of CrypkiEndpoints.
 	// If any return success, the signed certificate will be returned to the caller.
-	CrypkiEndpoints []string `mapstructure:"crypki_endpoints"`
+	CrypkiEndpoints []string `mapstructure:"crypki_endpoints" validate:"required"`
 	// CrypkiPort is the port number of the crypki servers.
-	CrypkiPort uint `mapstructure:"crypki_port"`
+	CrypkiPort uint `mapstructure:"crypki_port" validate:"required"`
 	// Retries is the number of retry times to request certificate from a crypki server endpoint.
 	Retries uint `mapstructure:"retries"`
 }
@@ -51,19 +52,23 @@ type Signer struct {
 }
 
 // NewSignerWithGensignConf creates a Signer by GensignConfig.
-func NewSignerWithGensignConf(gensignConf config.GensignConfig) *Signer {
+func NewSignerWithGensignConf(gensignConf config.GensignConfig) (*Signer, error) {
 	conf := new(SignerConfig)
 	if err := mapstructure.Decode(gensignConf.SignerConfig, conf); err != nil {
-		log.Fatalf("failed to initiialize signer, err: %v", err)
+		return nil, fmt.Errorf("failed to decode signer config, err: %v", err)
 	}
 	return NewSigner(*conf)
 }
 
 // NewSigner creates a Signer by SignerConfig.
-func NewSigner(conf SignerConfig) *Signer {
-	tlsCfg, err := tlsConfiguration(&conf)
+func NewSigner(conf SignerConfig) (*Signer, error) {
+	if err := validate.Validate().Struct(conf); err != nil {
+		return nil, fmt.Errorf("failed to validate signer config, err: %v", err)
+	}
+
+	tlsCfg, err := TLSConfiguration(&conf)
 	if err != nil {
-		log.Fatalf("failed to initialize signer, err: %v", err)
+		return nil, fmt.Errorf("failed to parse tls config, err :%v", err)
 	}
 	clientCreds := credentials.NewTLS(tlsCfg)
 
@@ -95,7 +100,7 @@ func NewSigner(conf SignerConfig) *Signer {
 		endpoints:   endpoints,
 		dialOptions: dialOptions,
 	}
-	return signer
+	return signer, nil
 }
 
 // Sign makes a signing request against Crypki Server.
@@ -110,7 +115,7 @@ func (s *Signer) Sign(ctx context.Context, request *pb.SSHCertificateSigningRequ
 	return
 }
 
-// postUserSSHCertificate establishes the GRPC connection to the Crypki Server, and sends the signing request.
+// postUserSSHCertificate establishes the gRPC connection to the Crypki Server, and sends the signing request.
 func (s *Signer) postUserSSHCertificate(ctx context.Context, csr *proto.SSHCertificateSigningRequest, endpoint string) (certs []ssh.PublicKey, comments []string, err error) {
 	const apiName = "postUserSSHCertificate"
 	conn, err := EstablishClientConn(ctx, endpoint, s.dialOptions...)
@@ -132,4 +137,18 @@ func (s *Signer) postUserSSHCertificate(ctx context.Context, csr *proto.SSHCerti
 	}
 
 	return pubKeys, comments, nil
+}
+
+// Endpoints clones the endpoints.
+func (s *Signer) Endpoints() (endpoints []string) {
+	endpoints = make([]string, len(s.endpoints))
+	copy(endpoints, s.endpoints)
+	return
+}
+
+// DialOptions clones the dialOptions.
+func (s *Signer) DialOptions() (options []grpc.DialOption) {
+	options = make([]grpc.DialOption, len(s.dialOptions))
+	copy(options, s.dialOptions)
+	return
 }

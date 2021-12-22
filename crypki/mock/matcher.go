@@ -3,7 +3,6 @@ package mock
 import (
 	"fmt"
 	"github.com/golang/mock/gomock"
-	"strings"
 )
 
 type strMatcher struct {
@@ -12,12 +11,20 @@ type strMatcher struct {
 
 // Matches returns whether x is a match.
 func (s strMatcher) Matches(x interface{}) bool {
-	return strings.EqualFold(s.x, fmt.Sprintf("%v", x))
+	xStr, ok := x.(string)
+	if ok {
+		return s.x == xStr
+	}
+	xStringer, ok := x.(fmt.Stringer)
+	if ok {
+		return s.x == xStringer.String()
+	}
+	return false
 }
 
 // String describes what the matcher matches.
-func (e strMatcher) String() string {
-	return fmt.Sprintf("is equal to %v", e.x)
+func (s strMatcher) String() string {
+	return fmt.Sprintf("is equal to %v", s.x)
 }
 
 // String returns a StringMatcher used for gomock to match the expected value.

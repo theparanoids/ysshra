@@ -14,7 +14,6 @@ import (
 	"github.com/golang/mock/gomock"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
 	"github.com/theparanoids/crypki/proto"
-	"github.com/theparanoids/crypki/proto/mock"
 	mockhelper "go.vzbuilders.com/peng/sshra-oss/crypki/mock"
 	"go.vzbuilders.com/peng/sshra-oss/internal/backoff"
 	"go.vzbuilders.com/peng/sshra-oss/sshutils/key"
@@ -63,11 +62,11 @@ func testSSHCertificate(t *testing.T, prins ...string) (*ssh.Certificate, *rsa.P
 	return crt, priv
 }
 
-func testMockGrcServer(t *testing.T) (*mock.MockSigningServer, []grpc.DialOption) {
+func testMockGRPCServer(t *testing.T) (*proto.MockSigningServer, []grpc.DialOption) {
 	ctrl := gomock.NewController(t)
 	t.Cleanup(ctrl.Finish)
 
-	mockServer := mock.NewMockSigningServer(ctrl)
+	mockServer := proto.NewMockSigningServer(ctrl)
 
 	listener := bufconn.Listen(bufSize)
 	s := grpc.NewServer()
@@ -94,6 +93,7 @@ func testMockGrcServer(t *testing.T) (*mock.MockSigningServer, []grpc.DialOption
 		grpc.WithUnaryInterceptor(grpc_retry.UnaryClientInterceptor(
 			grpc_retry.WithMax(3),
 			// Test retry and backoff in Millisecond.
+			grpc_retry.WithPerRetryTimeout(5.0*time.Millisecond),
 			grpc_retry.WithBackoff((&backoff.Config{
 				BaseDelay:  2.0 * time.Millisecond,
 				Multiplier: 3.0,
@@ -176,9 +176,9 @@ func TestSignerPostUserSSHCertificate(t *testing.T) {
 		},
 	}
 	for name, tt := range table {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Hour)
 		t.Run(name, func(t *testing.T) {
-			mockServer, dialOpts := testMockGrcServer(t)
+			mockServer, dialOpts := testMockGRPCServer(t)
 			mockServer.
 				EXPECT().
 				PostUserSSHCertificate(gomock.Any(), mockhelper.String(tt.csr)).

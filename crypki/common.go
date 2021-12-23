@@ -23,8 +23,6 @@ func GetDefaultExtension() map[string]string {
 
 // EstablishClientConn establishes a GRPC connection to the crypki endpoint.
 func EstablishClientConn(ctx context.Context, endpoint string, opts ...grpc.DialOption) (conn *grpc.ClientConn, err error) {
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
 	conn, err = grpc.DialContext(ctx, endpoint, opts...)
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "failed to dial to Crypki: %v", err)

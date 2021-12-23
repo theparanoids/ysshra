@@ -92,6 +92,7 @@ func NewSigner(conf SignerConfig) (*Signer, error) {
 		// Ref: https://github.com/grpc/grpc-go/blob/master/interceptor.go#L28
 		grpc.WithUnaryInterceptor(grpc_retry.UnaryClientInterceptor(
 			grpc_retry.WithMax(retries),
+			grpc_retry.WithPerRetryTimeout(timeout),
 			grpc_retry.WithBackoff(backoff.DefaultConfig.Backoff)),
 		),
 	}

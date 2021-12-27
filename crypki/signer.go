@@ -4,10 +4,8 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"time"
 
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
-	"github.com/mitchellh/mapstructure"
 	"github.com/theparanoids/crypki/proto"
 	pb "github.com/theparanoids/crypki/proto"
 	"go.vzbuilders.com/peng/sshra-oss/config"
@@ -20,31 +18,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-const (
-	// timeout for dialing a client connection.
-	timeout        = 5.0 * time.Second
-	retriesDefault = 3
-)
-
-// SignerConfig contains the signer data from the config file.
-type SignerConfig struct {
-	// TLSClientKeyFile is the client key to authenticate requestor's identity at Crypki.
-	TLSClientKeyFile string `mapstructure:"tls_client_key_file" validate:"required"`
-	// TLSClientKeyFile is the client cert to authenticate requestor's identity at Crypki.
-	TLSClientCertFile string `mapstructure:"tls_client_cert_file" validate:"required"`
-	// TLSCACertFiles is the list of certification authority certs to verify Crypki server cert.
-	TLSCACertFiles []string `mapstructure:"tls_ca_cert_files" validate:"required"`
-	// CrypkiEndpoints is the endpoint list of the crypki servers.
-	// It is recommended to put IPs or secondary DNS name into the list.
-	// Signer tries to send the certificate request to the crypki server in the order of CrypkiEndpoints.
-	// If any return success, the signed certificate will be returned to the caller.
-	CrypkiEndpoints []string `mapstructure:"crypki_endpoints" validate:"required"`
-	// CrypkiPort is the port number of the crypki servers.
-	CrypkiPort uint `mapstructure:"crypki_port" validate:"required"`
-	// Retries is the number of retry times to request certificate from a crypki server endpoint.
-	Retries uint `mapstructure:"retries"`
-}
-
 // Signer encapsulates the Crypki client.
 type Signer struct {
 	endpoints   []string
@@ -53,15 +26,17 @@ type Signer struct {
 
 // NewSignerWithGensignConf creates a Signer by GensignConfig.
 func NewSignerWithGensignConf(gensignConf config.GensignConfig) (*Signer, error) {
-	conf := new(SignerConfig)
-	if err := mapstructure.Decode(gensignConf.SignerConfig, conf); err != nil {
+	conf, err := decodeSignerConfig(gensignConf.SignerConfig)
+	if err != nil {
 		return nil, fmt.Errorf("failed to decode signer config, err: %v", err)
 	}
-	return NewSigner(*conf)
+	return NewSigner(conf)
 }
 
 // NewSigner creates a Signer by SignerConfig.
 func NewSigner(conf SignerConfig) (*Signer, error) {
+	conf.populate()
+
 	if err := validate.Validate().Struct(conf); err != nil {
 		return nil, fmt.Errorf("failed to validate signer config, err: %v", err)
 	}
@@ -77,11 +52,6 @@ func NewSigner(conf SignerConfig) (*Signer, error) {
 		endpoints[i] = fmt.Sprintf("%s:%d", endpoint, conf.CrypkiPort)
 	}
 
-	retries := conf.Retries
-	if retries == 0 {
-		retries = retriesDefault
-	}
-
 	dialOptions := []grpc.DialOption{
 		grpc.WithTransportCredentials(clientCreds),
 		grpc.WithBlock(),
@@ -91,8 +61,8 @@ func NewSigner(conf SignerConfig) (*Signer, error) {
 		// delegates all unary RPC invocations to the interceptor.
 		// Ref: https://github.com/grpc/grpc-go/blob/master/interceptor.go#L28
 		grpc.WithUnaryInterceptor(grpc_retry.UnaryClientInterceptor(
-			grpc_retry.WithMax(retries),
-			grpc_retry.WithPerRetryTimeout(timeout),
+			grpc_retry.WithMax(conf.Retries),
+			grpc_retry.WithPerRetryTimeout(conf.PerTryTimeout),
 			grpc_retry.WithBackoff(backoff.DefaultConfig.Backoff)),
 		),
 	}

@@ -113,7 +113,6 @@ func TestNewSignerValidationFailed(t *testing.T) {
 }
 
 func TestSignerPostUserSSHCertificate(t *testing.T) {
-	t.Parallel()
 	validCSR := &proto.SSHCertificateSigningRequest{
 		KeyMeta:    &proto.KeyMeta{Identifier: "key-identifier"},
 		Principals: []string{"testuser"},
@@ -202,7 +201,6 @@ func TestSignerPostUserSSHCertificate(t *testing.T) {
 
 func TestNewSigner(t *testing.T) {
 	t.Parallel()
-
 	tests := []struct {
 		name    string
 		conf    SignerConfig

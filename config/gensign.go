@@ -55,7 +55,18 @@ func (g *GensignConfig) ExtractHandlerConf(name string, handlerConf interface{})
 	if !ok {
 		return fmt.Errorf("failed to find config for handler %q", name)
 	}
-	if err := mapstructure.Decode(hConfMap, handlerConf); err != nil {
+	config := &mapstructure.DecoderConfig{
+		DecodeHook: StringToX509PublicKeyAlgo(),
+		Metadata:   nil,
+		Result:     handlerConf,
+	}
+
+	decoder, err := mapstructure.NewDecoder(config)
+	if err != nil {
+		return fmt.Errorf("failed to initialize decoder %v", err)
+	}
+	err = decoder.Decode(hConfMap)
+	if err != nil {
 		return fmt.Errorf("failed to decode handler conf for %q, err:%v", name, err)
 	}
 	return nil

@@ -2,6 +2,7 @@ package regular
 
 import (
 	"crypto/rand"
+	"crypto/x509"
 	"fmt"
 	"net"
 	"os"
@@ -32,8 +33,9 @@ const (
 type Handler struct {
 	*gensign.BaseHandler
 	// pubKeyDirPath specifies the directory path which stores users' public keys.
-	pubKeyDirPath string
-	agent         ag.Agent
+	pubKeyDirPath  string
+	agent          ag.Agent
+	keyIdentifiers map[x509.PublicKeyAlgorithm]string
 }
 
 // NewHandler creates a certificate broker via the ssh connection,
@@ -46,14 +48,14 @@ func NewHandler(gensignConf *config.GensignConfig, conn net.Conn) (gensign.Handl
 
 	b := broker.NewSSHCertBroker(conn)
 	return &Handler{
-		BaseHandler:   gensign.NewBaseHandler(b, HandlerName, IsForHumanUser),
-		pubKeyDirPath: c.PubKeyDir,
-		agent:         ag.NewClient(conn),
+		BaseHandler:    gensign.NewBaseHandler(b, HandlerName, IsForHumanUser),
+		pubKeyDirPath:  c.PubKeyDir,
+		agent:          ag.NewClient(conn),
+		keyIdentifiers: c.KeyIdentifiers,
 	}, nil
 }
 
-// TODO: rewrite the comment here. The comment may not include OTP.
-// Authenticate succeeds if the user is allowed to use OTP to get a certificate.
+// Authenticate succeeds if the user is allowed to use request the certificate based on the public key on server side's directory.
 func (h *Handler) Authenticate(param *csr.ReqParam) error {
 	err := param.Validate()
 	if err != nil {
@@ -101,8 +103,13 @@ func (h *Handler) Generate(param *csr.ReqParam) ([]*proto.SSHCertificateSigningR
 		TouchPolicy:   keyid.NeverTouch,
 	}
 
+	keyIdentifier, ok := h.keyIdentifiers[param.Attrs.CAPubKeyAlgo]
+	if !ok {
+		return nil, fmt.Errorf("unsupported CA public key algorithm %q", param.Attrs.CAPubKeyAlgo)
+	}
+
 	request := &proto.SSHCertificateSigningRequest{
-		KeyMeta:    &proto.KeyMeta{Identifier: crypki.SSHUserKeyID},
+		KeyMeta:    &proto.KeyMeta{Identifier: keyIdentifier},
 		Extensions: crypki.GetDefaultExtension(),
 		Validity:   defaultCertValiditySec,
 		Principals: kid.Principals,

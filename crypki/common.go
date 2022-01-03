@@ -7,9 +7,6 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// SSHUserKeyID - key identifier for user ssh certificate signing key.
-const SSHUserKeyID = "ssh-user-key"
-
 // GetDefaultExtension returns default extensions for user SSH certificate.
 func GetDefaultExtension() map[string]string {
 	exts := make(map[string]string)

@@ -20,7 +20,7 @@ var publicKeyAlgoName = map[string]x509.PublicKeyAlgorithm{
 }
 
 // StringToX509PublicKeyAlgo returns a DecodeHookFunc that converts
-// strings to x509.PublicKeyAlgorithm
+// string to x509.PublicKeyAlgorithm.
 func StringToX509PublicKeyAlgo() mapstructure.DecodeHookFunc {
 	return func(
 		f reflect.Type,

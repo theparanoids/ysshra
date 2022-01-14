@@ -88,9 +88,9 @@ func testMockGRPCServer(t *testing.T) (*proto.MockSigningServer, []grpc.DialOpti
 			// Test retry and backoff in Millisecond.
 			grpc_retry.WithPerRetryTimeout(5.0*time.Millisecond),
 			grpc_retry.WithBackoff((&backoff.Config{
-				BaseDelay:  2.0 * time.Millisecond,
+				BaseDelay:  30.0 * time.Millisecond,
 				Multiplier: 3.0,
-				MaxDelay:   15.0 * time.Millisecond,
+				MaxDelay:   500.0 * time.Millisecond,
 				Jitter:     0.2,
 			}).Backoff)),
 		),
@@ -148,7 +148,7 @@ func TestSignerPostUserSSHCertificate(t *testing.T) {
 			expectedErr: errors.New("bad request: cannot use key unknown"),
 			times:       1,
 		},
-		"test": {
+		"unavailable": {
 			csr:         invalidCSR2,
 			out:         &proto.SSHKey{},
 			expectedErr: status.Error(codes.Unavailable, "transport is closing"),
@@ -158,12 +158,6 @@ func TestSignerPostUserSSHCertificate(t *testing.T) {
 			csr:         invalidCSR3,
 			out:         &proto.SSHKey{},
 			expectedErr: status.Error(codes.DeadlineExceeded, "server request timeout"),
-			times:       3,
-		},
-		"client timeout": {
-			csr:         invalidCSR3,
-			out:         &proto.SSHKey{},
-			expectedErr: status.Error(codes.DeadlineExceeded, "client request timeout"),
 			times:       3,
 		},
 	}

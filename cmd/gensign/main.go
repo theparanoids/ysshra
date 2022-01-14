@@ -30,10 +30,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to initailize the connection for ssh agent, %v", err)
 	}
+	defer conn.Close()
 
 	var handlers []gensign.Handler
 	// Create Handler by the configuration.
-	for hName, _ := range conf.HandlerConfig {
+	for hName := range conf.HandlerConfig {
 		// Lookup creator by the handler mapping.
 		create, ok := handlerCreators[hName]
 		if !ok {

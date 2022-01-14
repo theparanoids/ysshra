@@ -2,56 +2,53 @@ package regular
 
 import (
 	"crypto/rand"
-	"crypto/x509"
 	"fmt"
 	"net"
 	"os"
 	"path"
-
-	"golang.org/x/crypto/ssh"
-	ag "golang.org/x/crypto/ssh/agent"
+	"strings"
+	"time"
 
 	"github.com/theparanoids/crypki/proto"
+	agssh "go.vzbuilders.com/peng/sshra-oss/agent/ssh"
 	"go.vzbuilders.com/peng/sshra-oss/common"
 	"go.vzbuilders.com/peng/sshra-oss/config"
 	"go.vzbuilders.com/peng/sshra-oss/crypki"
 	"go.vzbuilders.com/peng/sshra-oss/csr"
 	"go.vzbuilders.com/peng/sshra-oss/gensign"
-	"go.vzbuilders.com/peng/sshra-oss/internal/cert/broker"
 	"go.vzbuilders.com/peng/sshra-oss/keyid"
+	"golang.org/x/crypto/ssh"
+	ag "golang.org/x/crypto/ssh/agent"
 )
 
 const (
 	// HandlerName is a unique name to identify a handler.
+	// It is also appended to the cert label.
 	HandlerName = "paranoids.regular"
 	// IsForHumanUser indicates whether this handler should be used for a human user.
-	IsForHumanUser         = true
-	defaultCertValiditySec = 12 * 3600 // 12 hours
+	IsForHumanUser = true
 )
 
 // Handler implements gensign.Handler.
 type Handler struct {
-	*gensign.BaseHandler
-	// pubKeyDirPath specifies the directory path which stores users' public keys.
-	pubKeyDirPath  string
-	agent          ag.Agent
-	keyIdentifiers map[x509.PublicKeyAlgorithm]string
+	certValiditySec uint64
+	agent           ag.Agent
+	conf            *conf
 }
 
-// NewHandler creates a certificate broker via the ssh connection,
+// NewHandler creates an SSH agent the ssh connection,
 // and constructs a gensign.Handler containing the options loaded from conf.
 func NewHandler(gensignConf *config.GensignConfig, conn net.Conn) (gensign.Handler, error) {
-	c := new(conf)
+	c := NewDefaultConf()
 	if err := gensignConf.ExtractHandlerConf(HandlerName, c); err != nil {
 		return nil, fmt.Errorf("failed to initiialize handler %q, err: %v", HandlerName, err)
 	}
 
-	b := broker.NewSSHCertBroker(conn)
+	agent := ag.NewClient(conn)
+
 	return &Handler{
-		BaseHandler:    gensign.NewBaseHandler(b, HandlerName, IsForHumanUser),
-		pubKeyDirPath:  c.PubKeyDir,
-		agent:          ag.NewClient(conn),
-		keyIdentifiers: c.KeyIdentifiers,
+		agent: agent,
+		conf:  c,
 	}, nil
 }
 
@@ -75,17 +72,12 @@ func (h *Handler) Authenticate(param *csr.ReqParam) error {
 	return nil
 }
 
-// TODO: add tests and wrap all errors as gensign errors.
 // Generate implements csr.Generator.
-func (h *Handler) Generate(param *csr.ReqParam) ([]*proto.SSHCertificateSigningRequest, error) {
+// TODO: add tests and wrap all errors as gensign errors.
+func (h *Handler) Generate(param *csr.ReqParam) ([]csr.AgentKey, error) {
 	err := param.Validate()
 	if err != nil {
 		return nil, gensign.NewError(gensign.InvalidParams, HandlerName, err)
-	}
-
-	pubKeyBytes, err := getPubKeyBytes(h.pubKeyDirPath, param.LogName)
-	if err != nil {
-		return nil, err
 	}
 
 	kid := &keyid.KeyID{
@@ -103,28 +95,35 @@ func (h *Handler) Generate(param *csr.ReqParam) ([]*proto.SSHCertificateSigningR
 		TouchPolicy:   keyid.NeverTouch,
 	}
 
-	keyIdentifier, ok := h.keyIdentifiers[param.Attrs.CAPubKeyAlgo]
+	agentKey, err := h.generateAgentKey()
+	if err != nil {
+		return nil, gensign.NewError(gensign.HandlerGenCSRErr, HandlerName, err)
+	}
+
+	keyIdentifier, ok := h.conf.KeyIdentifiers[param.Attrs.CAPubKeyAlgo]
 	if !ok {
-		return nil, fmt.Errorf("unsupported CA public key algorithm %q", param.Attrs.CAPubKeyAlgo)
+		err := fmt.Errorf("unsupported CA public key algorithm %q", param.Attrs.CAPubKeyAlgo)
+		return nil, gensign.NewError(gensign.HandlerConfErr, HandlerName, err)
 	}
 
 	request := &proto.SSHCertificateSigningRequest{
 		KeyMeta:    &proto.KeyMeta{Identifier: keyIdentifier},
 		Extensions: crypki.GetDefaultExtension(),
-		Validity:   defaultCertValiditySec,
+		Validity:   h.certValiditySec,
 		Principals: kid.Principals,
-		PublicKey:  string(pubKeyBytes),
+		PublicKey:  string(ssh.MarshalAuthorizedKey(agentKey.PublicKey())),
 	}
 
 	request.KeyId, err = kid.Marshal()
 	if err != nil {
-		return nil, err
+		return nil, gensign.NewError(gensign.HandlerGenCSRErr, HandlerName, err)
 	}
-	return []*proto.SSHCertificateSigningRequest{request}, nil
+
+	return []csr.AgentKey{agentKey}, nil
 }
 
 func (h *Handler) challengePubKey(param *csr.ReqParam) error {
-	pubKeyBytes, err := getPubKeyBytes(h.pubKeyDirPath, param.LogName)
+	pubKeyBytes, err := getPubKeyBytes(h.conf.PubKeyDir, param.LogName)
 	if err != nil {
 		return err
 	}
@@ -143,6 +142,20 @@ func (h *Handler) challengePubKey(param *csr.ReqParam) error {
 		return fmt.Errorf("cannot sign the challenge: %v", err)
 	}
 	return pubKey.Verify(data, sig)
+}
+
+func (h *Handler) generateAgentKey() (*csrAgentKey, error) {
+	agentKeyOpt := agssh.DefaultKeyOpt
+	agentKeyOpt.KeyRefreshFilter = keyFilter
+	agentKeyOpt.PrivateKeyValiditySec = uint32(h.conf.CertValiditySec) + uint32(time.Hour.Seconds())
+	agentKeyOpt.CertLabel = fmt.Sprintf("%s-%s", HandlerName, "cert")
+	agentKey, err := agssh.NewSSHAgentKeyWithOpt(h.agent, agentKeyOpt)
+	if err != nil {
+		return nil, err
+	}
+	return &csrAgentKey{
+		AgentKey: agentKey,
+	}, nil
 }
 
 // getPubKeyBytes returns the public key for the logName in []byte format.
@@ -165,4 +178,8 @@ func lookupPubKeyFile(pubKeyDirPath string, logName string) (string, error) {
 		return "", err
 	}
 	return pubKeyPath, nil
+}
+
+func keyFilter(key *ag.Key) bool {
+	return strings.Contains(key.Comment, HandlerName)
 }

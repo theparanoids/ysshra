@@ -3,10 +3,11 @@ version: 4
 
 annotations:
   screwdriver.cd/chainPR: true
-  screwdriver.cd/executor: k8s-restricted
 
 shared:
   template: go/rhel8
+  annotations:
+    screwdriver.cd/executor: k8s-restricted
   steps:
     - testrace: echo 'no-op testrace'
     - package-rpm: echo 'no-op package-rpm'

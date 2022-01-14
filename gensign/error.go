@@ -61,6 +61,8 @@ const (
 	HandlerDisabled
 	HandlerAuthN
 	InvalidParams
+	HandlerGenCSRErr
+	HandlerConfErr
 )
 
 // String returns the ErrorType's string representation.
@@ -72,6 +74,10 @@ func (t ErrorType) String() string {
 		return "handler authentication error"
 	case InvalidParams:
 		return "handler receives invalid parameters"
+	case HandlerGenCSRErr:
+		return "handler fails to generate csr"
+	case HandlerConfErr:
+		return "handler configuration error"
 	default:
 		return "unknown error type"
 	}

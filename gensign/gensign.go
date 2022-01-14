@@ -44,26 +44,29 @@ func Run(params *csr.ReqParam, handlers []Handler, signer csr.Signer) (err error
 		return fmt.Errorf(`gensign: id=%q, msg="all authentications failed"`, params.TransID)
 	}
 
-	sshCSRs, err := handler.Generate(params)
+	csrAgentKeys, err := handler.Generate(params)
 	if err != nil {
 		return fmt.Errorf(`gensign: id=%q, msg="failed to generate CSR", err=%q`, params.TransID, err)
 	}
 
-	var certs []ssh.PublicKey
-	var comments []string
-	for _, csr := range sshCSRs {
-		cert, comment, err := signer.Sign(ctx, csr)
-		if err != nil {
-			return fmt.Errorf(`gensign: id=%q, msg="failed to sign CSR", err=%q"`, params.TransID, err)
+	for _, agentKey := range csrAgentKeys {
+		var (
+			certs    []ssh.PublicKey
+			comments []string
+		)
+		for _, csr := range agentKey.CSRs() {
+			cert, comment, err := signer.Sign(ctx, csr)
+			if err != nil {
+				return fmt.Errorf(`gensign: id=%q, msg="failed to sign CSR", err=%q"`, params.TransID, err)
+			}
+			certs = append(certs, cert...)
+			comments = append(comments, comment...)
 		}
-		certs = append(certs, cert...)
-		comments = append(comments, comment...)
+		err = agentKey.AddCertsToAgent(certs, comments)
+		if err != nil {
+			return fmt.Errorf(`gensign: id=%q, msg="failed to add certificates into the agent", err=%q`, params.TransID, err)
+		}
 	}
-	err = handler.UpdateCerts(certs, comments)
-	if err != nil {
-		return fmt.Errorf(`gensign: id=%q, msg="failed to update certificate", err=%q"`, params.TransID, err)
-	}
-
 	log.Printf(`gensign: id=%q, msg="gensign success", elapsed=%q`, params.TransID, time.Since(start).String())
 	return nil
 }

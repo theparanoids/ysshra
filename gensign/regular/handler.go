@@ -73,7 +73,7 @@ func (h *Handler) Authenticate(param *csr.ReqParam) error {
 }
 
 // Generate implements csr.Generator.
-// TODO: add tests and wrap all errors as gensign errors.
+// TODO: [SSHCA-2666] add tests and wrap all errors as gensign errors.
 func (h *Handler) Generate(param *csr.ReqParam) ([]csr.AgentKey, error) {
 	err := param.Validate()
 	if err != nil {

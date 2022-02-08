@@ -3,9 +3,9 @@ package crypki
 import (
 	"context"
 	"fmt"
-	"log"
 
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
+	"github.com/rs/zerolog/log"
 	"github.com/theparanoids/crypki/proto"
 	pb "github.com/theparanoids/crypki/proto"
 	"go.vzbuilders.com/peng/sshra-oss/config"
@@ -81,7 +81,7 @@ func (s *Signer) Sign(ctx context.Context, request *pb.SSHCertificateSigningRequ
 		if err == nil {
 			return
 		}
-		log.Print(err)
+		log.Warn().Err(err).Msgf("failed to post request to endpoint %q", endpoint)
 	}
 	return
 }

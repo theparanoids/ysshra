@@ -2,10 +2,11 @@ package config
 
 import (
 	"crypto/x509"
-	"github.com/mitchellh/mapstructure"
 	"reflect"
 	"strconv"
 	"strings"
+
+	"github.com/mitchellh/mapstructure"
 )
 
 // publicKeyAlgoName is the mapping from string to x509.PublicKeyAlgorithm.

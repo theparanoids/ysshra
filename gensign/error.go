@@ -63,6 +63,7 @@ const (
 	InvalidParams
 	HandlerGenCSRErr
 	HandlerConfErr
+	Panic
 )
 
 // String returns the ErrorType's string representation.
@@ -78,7 +79,24 @@ func (t ErrorType) String() string {
 		return "handler fails to generate csr"
 	case HandlerConfErr:
 		return "handler configuration error"
+	case Panic:
+		return "panic"
 	default:
 		return "unknown error type"
 	}
+}
+
+func IsErrorOfType(err interface{}, typ ErrorType) bool {
+	e, ok := IsError(err)
+	if !ok {
+		return false
+	}
+	return e.Type() == typ
+}
+
+func IsError(err interface{}) (*Error, bool) {
+	if e, ok := err.(*Error); ok {
+		return e, ok
+	}
+	return nil, false
 }

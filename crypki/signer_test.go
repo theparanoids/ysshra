@@ -99,7 +99,6 @@ func testMockGRPCServer(t *testing.T) (*proto.MockSigningServer, []grpc.DialOpti
 }
 
 func TestNewSignerValidationFailed(t *testing.T) {
-	t.Parallel()
 	_, err := NewSigner(SignerConfig{
 		TLSClientKeyFile: "key",
 	})
@@ -194,7 +193,6 @@ func TestSignerPostUserSSHCertificate(t *testing.T) {
 }
 
 func TestNewSigner(t *testing.T) {
-	t.Parallel()
 	tests := []struct {
 		name    string
 		conf    SignerConfig

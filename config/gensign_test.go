@@ -6,6 +6,7 @@ import (
 	"path"
 	"reflect"
 	"testing"
+	"time"
 )
 
 func TestNewGensignConfig(t *testing.T) {
@@ -55,6 +56,50 @@ func TestNewGensignConfig(t *testing.T) {
 					"tls_client_key_file":  "path_to_tls_client.key",
 					"tls_client_cert_file": "path_to_tls_client.crt",
 				},
+				RequestTimeout: 60 * time.Second,
+			},
+		},
+		{
+			name: "explicitly set gensign timeout",
+			getPath: func(t *testing.T) string {
+				configStr := `
+					{
+						"keyid_version": 1,
+						"sshca_failure_dir" : "/dev/shm/sshcafailures/",
+						"sshca_failure_timeout" : 3600,
+						"sshca_failure_retry" : 5,
+						"handlers": {
+							"Regular": {
+								"public_key_dir": "/etc/ssh/sshra/pubkey"
+							}
+						},
+						"signer": {
+							"tls_client_key_file": "path_to_tls_client.key",
+							"tls_client_cert_file": "path_to_tls_client.crt"
+						},
+						"request_timeout": 30
+					}`
+				configPath := path.Join(t.TempDir(), "config.json")
+				if err := os.WriteFile(configPath, []byte(configStr), 0644); err != nil {
+					t.Fatalf("failed to write config file, err: %v", err)
+				}
+				return configPath
+			},
+			want: &GensignConfig{
+				KeyIDVersion:        1,
+				SSHCAFailureDir:     "/dev/shm/sshcafailures/",
+				SSHCAFailureTimeout: 3600,
+				SSHCAFailureRetry:   5,
+				HandlerConfig: map[string]handlerConfMap{
+					"Regular": {
+						"public_key_dir": "/etc/ssh/sshra/pubkey",
+					},
+				},
+				SignerConfig: map[string]interface{}{
+					"tls_client_key_file":  "path_to_tls_client.key",
+					"tls_client_cert_file": "path_to_tls_client.crt",
+				},
+				RequestTimeout: 30 * time.Second,
 			},
 		},
 	}
@@ -65,6 +110,7 @@ func TestNewGensignConfig(t *testing.T) {
 				t.Errorf("NewGensignConfig() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("NewGensignConfig() got = %v, want %v", got, tt.want)
 			}

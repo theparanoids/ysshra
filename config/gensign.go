@@ -4,8 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/mitchellh/mapstructure"
+)
+
+const (
+	// 60 * time.Second
+	requestTimeoutDefault = 60
 )
 
 type handlerConfMap map[string]interface{}
@@ -34,6 +40,15 @@ type GensignConfig struct {
 	HandlerConfig map[string]handlerConfMap `json:"handlers"`
 	// SignerConfig is the mapping for signer configuration.
 	SignerConfig map[string]interface{} `json:"signer"`
+	// Timeout for gensign (in second).
+	RequestTimeout time.Duration `json:"request_timeout"`
+}
+
+func (g *GensignConfig) populate() {
+	if g.RequestTimeout <= 0 {
+		g.RequestTimeout = requestTimeoutDefault
+	}
+	g.RequestTimeout = g.RequestTimeout * time.Second
 }
 
 // NewGensignConfig returns the gensign configuration loaded from the provided path.
@@ -46,6 +61,7 @@ func NewGensignConfig(path string) (*GensignConfig, error) {
 	if err := json.Unmarshal(data, conf); err != nil {
 		return nil, err
 	}
+	conf.populate()
 	return conf, nil
 }
 

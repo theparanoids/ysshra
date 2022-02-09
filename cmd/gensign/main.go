@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"io"
 	"os"
 
@@ -78,12 +79,15 @@ func main() {
 		log.Fatal().Err(err).Msg("failed to create signer")
 	}
 
-	if err := gensign.Run(reqParam, handlers, signer); err != nil {
+	ctx, cancel := context.WithTimeout(context.Background(), conf.RequestTimeout)
+	defer cancel()
+	if err := gensign.Run(ctx, reqParam, handlers, signer); err != nil {
 		if gensign.IsErrorOfType(err, gensign.Panic) {
 			// gensign will return debug stack in err when panic.
 			// We do not want it to be printed to os.Stderr since it will also go to user's console.
 			log.Logger = log.Output(file)
 		}
 		log.Fatal().Err(err).Msg("failed to run gensign")
+
 	}
 }

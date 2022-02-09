@@ -13,11 +13,8 @@ import (
 	"go.vzbuilders.com/peng/sshra-oss/csr"
 )
 
-const timeout = 60 * time.Second
-
-func Run(params *csr.ReqParam, handlers []Handler, signer csr.Signer) (err error) {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
+func Run(ctx context.Context, params *csr.ReqParam, handlers []Handler, signer csr.Signer) (err error) {
+	// Prepare for panic logs
 	defer func() {
 		if r := recover(); r != nil {
 			err = NewError(Panic, "", fmt.Errorf(`unexpected crash: %q`, string(debug.Stack())))

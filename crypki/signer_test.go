@@ -91,7 +91,6 @@ func testMockGRPCServer(t *testing.T) (*proto.MockSigningServer, []grpc.DialOpti
 				BaseDelay:  30.0 * time.Millisecond,
 				Multiplier: 3.0,
 				MaxDelay:   500.0 * time.Millisecond,
-				Jitter:     0.2,
 			}).Backoff)),
 		),
 	}
@@ -112,6 +111,9 @@ func TestNewSignerValidationFailed(t *testing.T) {
 }
 
 func TestSignerPostUserSSHCertificate(t *testing.T) {
+	// Disable parallel to prevent race condition with TestSignerPostUserSSHCertificateTimeoutRetry.
+	// Both test cases rely on the mock grpc server.
+	// t.Parallel()
 	validCSR := &proto.SSHCertificateSigningRequest{
 		KeyMeta:    &proto.KeyMeta{Identifier: "key-identifier"},
 		Principals: []string{"testuser"},
@@ -133,41 +135,36 @@ func TestSignerPostUserSSHCertificate(t *testing.T) {
 		csr         *proto.SSHCertificateSigningRequest
 		out         *proto.SSHKey
 		expectedErr error
-		times       int
 	}{
 		"happy path": {
 			csr:         validCSR,
 			out:         &proto.SSHKey{Key: marshalledCert},
 			expectedErr: nil,
-			times:       1,
 		},
 		"invalid CSR": {
 			csr:         invalidCSR,
 			out:         &proto.SSHKey{},
 			expectedErr: errors.New("bad request: cannot use key unknown"),
-			times:       1,
 		},
 		"unavailable": {
 			csr:         invalidCSR2,
 			out:         &proto.SSHKey{},
 			expectedErr: status.Error(codes.Unavailable, "transport is closing"),
-			times:       3,
 		},
 		"server timeout": {
 			csr:         invalidCSR3,
 			out:         &proto.SSHKey{},
 			expectedErr: status.Error(codes.DeadlineExceeded, "server request timeout"),
-			times:       3,
 		},
 	}
 	for name, tt := range table {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Hour)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 		t.Run(name, func(t *testing.T) {
 			mockServer, dialOpts := testMockGRPCServer(t)
 			mockServer.
 				EXPECT().
 				PostUserSSHCertificate(gomock.Any(), mockhelper.String(tt.csr)).
-				Return(tt.out, tt.expectedErr).Times(tt.times)
+				Return(tt.out, tt.expectedErr).AnyTimes()
 			s := Signer{
 				dialOptions: dialOpts,
 			}
@@ -189,6 +186,33 @@ func TestSignerPostUserSSHCertificate(t *testing.T) {
 				cancel()
 			}
 		})
+	}
+}
+
+func TestSignerPostUserSSHCertificateTimeoutRetry(t *testing.T) {
+	// Disable parallel to prevent race condition with TestSignerPostUserSSHCertificate.
+	// Both test cases rely on the mock grpc server.
+	// t.Parallel()
+	invalidCSR := &proto.SSHCertificateSigningRequest{
+		KeyMeta: &proto.KeyMeta{Identifier: "unknown"},
+	}
+
+	expectedErr := status.Error(codes.DeadlineExceeded, "server request timeout")
+	expectedRetryTimes := 3
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	mockServer, dialOpts := testMockGRPCServer(t)
+	mockServer.
+		EXPECT().
+		PostUserSSHCertificate(gomock.Any(), mockhelper.String(invalidCSR)).
+		Return(&proto.SSHKey{}, expectedErr).Times(expectedRetryTimes)
+	s := Signer{
+		dialOptions: dialOpts,
+	}
+	_, _, err := s.postUserSSHCertificate(ctx, invalidCSR, "")
+	if err == nil {
+		t.Errorf("expected error for the test, got nil")
 	}
 }
 

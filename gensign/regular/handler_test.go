@@ -86,7 +86,7 @@ func TestHandler_Authenticate(t *testing.T) {
 			params: goodParam,
 			GetHandler: func(t *testing.T) Handler {
 				_, pub, ag := newSSHKeyPairInAgent(t)
-				tmpDir := writePubKeyFile(t, "dummy", pub.Marshal())
+				tmpDir := writePubKeyFile(t, "dummy", ssh.MarshalAuthorizedKey(pub))
 				return Handler{
 					agent: ag,
 					conf:  &conf{PubKeyDir: tmpDir},
@@ -96,7 +96,7 @@ func TestHandler_Authenticate(t *testing.T) {
 		"nil param": {
 			GetHandler: func(t *testing.T) Handler {
 				_, pub, ag := newSSHKeyPairInAgent(t)
-				tmpDir := writePubKeyFile(t, "dummy", pub.Marshal())
+				tmpDir := writePubKeyFile(t, "dummy", ssh.MarshalAuthorizedKey(pub))
 				return Handler{
 					agent: ag,
 					conf:  &conf{PubKeyDir: tmpDir},
@@ -131,7 +131,7 @@ func TestHandler_challengePubKey(t *testing.T) {
 			name: "happy path",
 			GetHandler: func(t *testing.T, logName string) Handler {
 				_, pub, ag := newSSHKeyPairInAgent(t)
-				tmpDir := writePubKeyFile(t, logName, pub.Marshal())
+				tmpDir := writePubKeyFile(t, logName, ssh.MarshalAuthorizedKey(pub))
 				return Handler{
 					agent: ag,
 					conf:  &conf{PubKeyDir: tmpDir},
@@ -144,7 +144,7 @@ func TestHandler_challengePubKey(t *testing.T) {
 			GetHandler: func(t *testing.T, logName string) Handler {
 				_, _, ag := newSSHKeyPairInAgent(t)
 				_, mismatchedPub := newSSHKeyPair(t)
-				tmpDir := writePubKeyFile(t, logName, mismatchedPub.Marshal())
+				tmpDir := writePubKeyFile(t, logName, ssh.MarshalAuthorizedKey(mismatchedPub))
 				return Handler{
 					agent: ag,
 					conf:  &conf{PubKeyDir: tmpDir},

@@ -47,8 +47,9 @@ func NewHandler(gensignConf *config.GensignConfig, conn net.Conn) (gensign.Handl
 	agent := ag.NewClient(conn)
 
 	return &Handler{
-		agent: agent,
-		conf:  c,
+		agent:           agent,
+		certValiditySec: c.CertValiditySec,
+		conf:            c,
 	}, nil
 }
 
@@ -119,18 +120,20 @@ func (h *Handler) Generate(param *csr.ReqParam) ([]csr.AgentKey, error) {
 		return nil, gensign.NewError(gensign.HandlerGenCSRErr, HandlerName, err)
 	}
 
+	agentKey.addCSR(request)
+
 	return []csr.AgentKey{agentKey}, nil
 }
 
 func (h *Handler) challengePubKey(param *csr.ReqParam) error {
 	pubKeyBytes, err := getPubKeyBytes(h.conf.PubKeyDir, param.LogName)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to read pubkey: %v", err)
 	}
 
-	pubKey, err := ssh.ParsePublicKey(pubKeyBytes)
+	pubKey, _, _, _, err := ssh.ParseAuthorizedKey(pubKeyBytes)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to parse pubkey: %v, pubkey: %q", err, string(pubKeyBytes))
 	}
 
 	data := make([]byte, 64)
@@ -170,9 +173,9 @@ func getPubKeyBytes(pubKeyDirPath string, logName string) ([]byte, error) {
 
 // lookupPubKeyFile returns the public key path for the logName.
 func lookupPubKeyFile(pubKeyDirPath string, logName string) (string, error) {
-	pubKeyPath := path.Join(pubKeyDirPath, logName)
+	pubKeyPath := path.Join(pubKeyDirPath, logName+".pub")
 	if _, err := os.Stat(pubKeyPath); err != nil {
-		pubKeyPath = path.Join(pubKeyDirPath, logName+".pub")
+		pubKeyPath = path.Join(pubKeyDirPath, logName)
 	}
 	if _, err := os.Stat(pubKeyPath); os.IsNotExist(err) {
 		return "", err

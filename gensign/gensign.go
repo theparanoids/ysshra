@@ -8,9 +8,8 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"golang.org/x/crypto/ssh"
-
 	"go.vzbuilders.com/peng/sshra-oss/csr"
+	"golang.org/x/crypto/ssh"
 )
 
 func Run(ctx context.Context, params *csr.ReqParam, handlers []Handler, signer csr.Signer) (err error) {
@@ -40,6 +39,10 @@ func Run(ctx context.Context, params *csr.ReqParam, handlers []Handler, signer c
 	csrAgentKeys, err := handler.Generate(params)
 	if err != nil {
 		return fmt.Errorf(`failed to generate CSR: %v`, err)
+	}
+
+	if len(csrAgentKeys) == 0 {
+		return fmt.Errorf(`no csr generated: %v`, err)
 	}
 
 	for _, agentKey := range csrAgentKeys {

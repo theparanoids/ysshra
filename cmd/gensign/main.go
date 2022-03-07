@@ -17,8 +17,7 @@ import (
 )
 
 const (
-	// TODO: specify a config path.
-	confPath = ""
+	confPath = "/opt/sshra/config.json"
 	logFile  = "/var/log/sshra/gensign.log"
 )
 

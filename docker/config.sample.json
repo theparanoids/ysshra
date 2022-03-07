@@ -1,0 +1,24 @@
+{
+  "keyid_version": 1,
+  "handlers":
+  {
+    "paranoids.regular":
+    {
+      "key_identifiers": {
+        "default": "ssh-user-key"
+      }
+    }
+  },
+  "signer":
+  {
+    "crypki_port": 4443,
+    "crypki_endpoints":
+    [
+      "crypki"
+    ],
+    "tls_client_key_file": "/opt/sshra/tls-crt/client.key",
+    "tls_client_cert_file": "/opt/sshra/tls-crt/client.crt",
+    "tls_ca_cert_files": ["/opt/sshra/tls-crt/ca.crt"],
+    "retries": 3
+  }
+}

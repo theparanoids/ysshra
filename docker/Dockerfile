@@ -12,17 +12,15 @@ RUN apt-get update
 RUN apt-get -y install openssh-server \
     openssl \
     openssh-client \
-    rsyslog \
-    sudo \
     # lsb-base for init functions
     lsb-base \
     vim
 
 COPY --from=0 ${SSHRA_DIR}/bin/gensign /usr/bin/gensign
-COPY docker/RA/init.d/sshra /etc/init.d/sshra
-COPY docker/RA/ssh/sshd_config.sshra /etc/ssh/sshd_config.sshra
-COPY docker/RA/config_user.sh /tmp/config_user.sh
-COPY docker/RA/user_allowlist.txt /tmp/user_allowlist.txt
+COPY docker/sshra/init.d/sshra /etc/init.d/sshra
+COPY docker/sshra/ssh/sshd_config.sshra /etc/ssh/sshd_config.sshra
+COPY docker/sshra/config_user.sh /tmp/config_user.sh
+COPY docker/sshra/user_allowlist.txt /tmp/user_allowlist.txt
 
 # Create linux users in the container.
 RUN /tmp/config_user.sh /tmp/user_allowlist.txt

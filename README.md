@@ -1,27 +1,24 @@
 # sshra-oss
-The open-source repo for SSHRA and SSHRA-client
+The repo for SSHRA and SSHRA-client
 
-> An SSH service to authenticate the clients and to accept requests for SSH certificates.
+> Note: **Features for yubikey based touch-to-login and touch-to-sudo is coming up next.**
+>
+> A SSH service to authenticate the clients and to accept requests for SSH certificates.
 > It performs key challenge and attestation against the client, and makes the request against CA (Certificate Authority).
 
 [Crypki](https://github.com/theparanoids/crypki) can be used as the CA signing backend of the service.
-
-# Update Notes
-Features for yubikey touch-to-login and touch-to-sudo is coming up next.
-
-* Provided [regular](./gensign/regular) handler to generate touchless SSH certificates CSR. 
 
 # User Guide
 
 ## Installation
 
 This guide takes [Crypki](https://github.com/theparanoids/crypki) as signing backend. 
-The password authentication is disabled (`PermitEmptyPasswords yes`, `AuthenticationMethods none`) in sshd config file 
-at `docker/RA/ssh/sshd_config.sshra`. Please feel free to adjust it or pull in PAM modules for your own environments.
+Password authentication is disabled (`PermitEmptyPasswords yes`, `AuthenticationMethods none`) in sshd config file 
+at `docker/sshra/ssh/sshd_config.sshra`. You can customize it or pull in PAM modules for your own environments.
 
 ### 1. Add authorized users
 
-* Add your username into `docker/RA/user_allowlist.txt`.
+* Add your username into `docker/sshra/user_allowlist.txt`.
 
 ### 2. Build sshra docker image
 
@@ -38,16 +35,16 @@ pushd ./docker
 ./gen-ssh-crt.sh
 
 # Generate ssh user keys.
-./gen-user-key.sh ./RA/user_allowlist.txt
+./gen-user-key.sh ./sshra/user_allowlist.txt
 
 popd
 ```
 
 ### 4. Setup CA signing backend (Cripki)
 
-Please refer to the section `Install` in [Crypki](https://github.com/theparanoids/crypki) readme.
+Please refer to the section `Install` in [Crypki readme](https://github.com/theparanoids/crypki).
 
-Then copy `ca.crt` `client.crt` and `client.key` to the folder `docker/tls-crt` in this repo.
+Copy `ca.crt` `client.crt` and `client.key` to the folder `docker/tls-crt` in this repo.
 
 ```bash
 CRYPKI_CRT_PATH=${PATH_TO_CRYPKI_REPO}/docker-softhsm/tls-crt
@@ -74,13 +71,13 @@ docker network connect pki crypki
 popd
 ```
 
-## usage
+## Usage
 
-### Use case: request a user certificate (touchless) from local
+### Use case: request a user certificate (touchless) from the sshra container 
 
-Note: `user_a` exists in `docker/RA/user_allowlist.txt`, and the corresponding linux user was created in sshra container during the docker build.   
+Note: `user_a` exists in `docker/sshra/user_allowlist.txt`, and the corresponding linux user was created in sshra container during the docker build.   
 
-* Add private key to the ssh-agent
+* Add `user_a`'s private key to the ssh-agent
 
 ```bash
 ssh-add -K ./docker/ssh-user/user_a
@@ -93,7 +90,17 @@ ssh -A user_a@localhost -p 222 -o UserKnownHostsFile=/dev/null -o StrictHostKeyC
 '{"ifVer":7, "username":"user_a", "hostname":"localhost", "sshClientVersion":"0.0"}'
 ```
 
-* Check the requsted certificate
+Note: You may encounter `The authenticity of host '[localhost]:222 ([::1]:222)' can't be established` error 
+when performing SSH against localhost without options `-o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no`. 
+To get rid of it, please append the CA public key  `./docker/ssh-crt/host_ca_key.pub` to your known host file `~/.ssh/known_hosts`.
+
+```bash
+echo "@cert-authority *" $(cat ./docker/ssh-crt/host_ca_key.pub) >> ~/.ssh/known_hosts
+ 
+ssh -A user_a@localhost -p 222 '{"ifVer":7, "username":"user_a", "hostname":"localhost", "sshClientVersion":"0.0"}'
+```
+
+* Check the requested certificate
 
 ```bash
 $ssh-keygen -Lf <(ssh-add -L)

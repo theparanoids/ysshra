@@ -38,7 +38,7 @@ func NewErrorWithMsg(t ErrorType, handlerName string, msg string) *Error {
 func (e Error) Error() string {
 	var builder strings.Builder
 	if e.handlerName != "" {
-		builder.WriteString(fmt.Sprintf("[%v]", e.handlerName))
+		builder.WriteString(fmt.Sprintf("%v ", e.handlerName))
 	}
 	builder.WriteString(e.type_.String())
 	if e.err != nil {

@@ -14,6 +14,7 @@ import (
 	"go.vzbuilders.com/peng/sshra-oss/csr"
 	"go.vzbuilders.com/peng/sshra-oss/gensign"
 	"go.vzbuilders.com/peng/sshra-oss/gensign/regular"
+	"go.vzbuilders.com/peng/sshra-oss/internal/logkey"
 )
 
 const (
@@ -27,8 +28,8 @@ var handlerCreators = map[string]gensign.CreateHandler{
 
 func main() {
 	log.Logger = log.Logger.With().Caller().Str("app", "gensign").Logger()
-	zerolog.MessageFieldName = "msg"
-	zerolog.ErrorFieldName = "err"
+	zerolog.MessageFieldName = logkey.MsgField
+	zerolog.ErrorFieldName = logkey.ErrField
 
 	file, err := os.OpenFile(logFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0664)
 	if err != nil {
@@ -67,7 +68,7 @@ func main() {
 		}
 		handler, err := create(conf, conn)
 		if err != nil {
-			log.Warn().Msgf("cannot create handler %s", hName)
+			log.Warn().Err(err).Msgf("cannot create handler %s", hName)
 			continue
 		}
 		handlers = append(handlers, handler)
@@ -86,7 +87,6 @@ func main() {
 			// We do not want it to be printed to os.Stderr since it will also go to user's console.
 			log.Logger = log.Output(file)
 		}
-		log.Fatal().Err(err).Msg("failed to run gensign")
-
+		log.Fatal().Str(logkey.TransIDField, reqParam.TransID).Err(err).Msg("failed to run gensign")
 	}
 }

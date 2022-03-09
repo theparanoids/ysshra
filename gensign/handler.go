@@ -14,5 +14,6 @@ type CreateHandler func(gensignConf *config.GensignConfig, conn net.Conn) (Handl
 // a standard gensign command.
 type Handler interface {
 	csr.Generator
+	Name() string
 	Authenticate(params *csr.ReqParam) error
 }

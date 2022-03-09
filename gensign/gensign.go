@@ -9,6 +9,7 @@ import (
 
 	"github.com/rs/zerolog/log"
 	"go.vzbuilders.com/peng/sshra-oss/csr"
+	"go.vzbuilders.com/peng/sshra-oss/internal/logkey"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -29,8 +30,7 @@ func Run(ctx context.Context, params *csr.ReqParam, handlers []Handler, signer c
 			handler = h
 			break
 		}
-		// TODO: [SSHCA-2740] add a function to Handler to return the handler name, so that we can identify which handler failed.
-		log.Info().Err(err).Msg("handler authentication failed")
+		log.Info().Err(err).Str("handler", h.Name()).Msgf("authentication failed")
 	}
 	if handler == nil {
 		return errors.New("all authentications failed")
@@ -63,6 +63,9 @@ func Run(ctx context.Context, params *csr.ReqParam, handlers []Handler, signer c
 			return fmt.Errorf("failed to add certificates into the agent: %v", err)
 		}
 	}
-	log.Info().Stringer("elapsed", time.Since(start)).Msg("gensign success")
+	log.Info().Stringer(logkey.TimeElapseField, time.Since(start)).
+		Str(logkey.TransIDField, params.TransID).
+		Str(logkey.HandlerField, handler.Name()).
+		Msgf("gensign success")
 	return nil
 }

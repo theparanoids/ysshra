@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/rs/zerolog/log"
 	"github.com/theparanoids/crypki/proto"
 	agssh "go.vzbuilders.com/peng/sshra-oss/agent/ssh"
 	"go.vzbuilders.com/peng/sshra-oss/common"
@@ -16,6 +17,7 @@ import (
 	"go.vzbuilders.com/peng/sshra-oss/crypki"
 	"go.vzbuilders.com/peng/sshra-oss/csr"
 	"go.vzbuilders.com/peng/sshra-oss/gensign"
+	"go.vzbuilders.com/peng/sshra-oss/internal/logkey"
 	"go.vzbuilders.com/peng/sshra-oss/keyid"
 	"golang.org/x/crypto/ssh"
 	ag "golang.org/x/crypto/ssh/agent"
@@ -53,6 +55,11 @@ func NewHandler(gensignConf *config.GensignConfig, conn net.Conn) (gensign.Handl
 	}, nil
 }
 
+// Name returns the name of the handler.
+func (h *Handler) Name() string {
+	return HandlerName
+}
+
 // Authenticate succeeds if the user is allowed to use request the certificate based on the public key on server side's directory.
 func (h *Handler) Authenticate(param *csr.ReqParam) error {
 	err := param.Validate()
@@ -74,7 +81,7 @@ func (h *Handler) Authenticate(param *csr.ReqParam) error {
 }
 
 // Generate implements csr.Generator.
-// TODO: [SSHCA-2666] add tests and wrap all errors as gensign errors.
+// TODO: add tests and wrap all errors as gensign errors.
 func (h *Handler) Generate(param *csr.ReqParam) ([]csr.AgentKey, error) {
 	err := param.Validate()
 	if err != nil {
@@ -121,6 +128,12 @@ func (h *Handler) Generate(param *csr.ReqParam) ([]csr.AgentKey, error) {
 	}
 
 	agentKey.addCSR(request)
+
+	log.Info().Str(logkey.TransIDField, param.TransID).
+		Str(logkey.HandlerField, HandlerName).
+		Strs(logkey.PrinsField, request.Principals).
+		Str(logkey.KeyidField, request.KeyId).
+		Msgf("CSRs successfully generated")
 
 	return []csr.AgentKey{agentKey}, nil
 }

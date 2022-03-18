@@ -8,8 +8,8 @@ FROM debian:sid-slim
 ENV SSHRA_DIR /go/src/github.com/theparanoids/sshra
 WORKDIR /opt/sshra
 
-RUN apt-get update
-RUN apt-get -y install openssh-server \
+RUN apt-get update && \
+    apt-get -y install openssh-server \
     openssl \
     openssh-client \
     # lsb-base for init functions

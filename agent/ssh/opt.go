@@ -7,7 +7,7 @@ import (
 
 const (
 	defaultKeyValiditySec  = 12 * 3600 // 12 hours
-	defaultPublicKeyAlgo   = key.RSA2048
+	defaultPublicKeyAlgo   = key.ECDSAsecp384r1
 	defaultPrivateKeyLabel = "private-key"
 	defaultCertLabel       = "certificate"
 )

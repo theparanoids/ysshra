@@ -1,3 +1,6 @@
+// Copyright 2022 Yahoo Inc.
+// Licensed under the terms of the Apache License 2.0. Please see LICENSE file in project root for terms.
+
 // Package message provides functionality for handling message that a client pass to an RA.
 // The message contain attributes of SSH certificate that the client requests for.
 // For example:

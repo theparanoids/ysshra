@@ -1,3 +1,6 @@
+// Copyright 2022 Yahoo Inc.
+// Licensed under the terms of the Apache License 2.0. Please see LICENSE file in project root for terms.
+
 // Package backoff implements the backoff strategy for gRPC calls from client.
 // https://github.com/grpc/grpc-go/blob/master/internal/backoff/backoff.go
 package backoff

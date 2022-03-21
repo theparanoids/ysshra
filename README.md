@@ -1,10 +1,9 @@
 # PSSHCA SSHRA
 SSHRA is the registration authority of PSSHCA (Paranoids SSHCA).
 
-> Note: **Features for yubikey based touch-to-login and touch-to-sudo is coming up next.**
 >
-> A SSH service to authenticate the clients and to accept requests for SSH certificates.
-> It performs key challenge and attestation against the client, and makes the request against CA (Certificate Authority).
+> A service to authenticate the client and provision ephemeral SSH user certificate.
+> Note: **Features for attestation check during authentication, yubikey based touch-to-login and touch-to-sudo are coming up next.**
 
 [Crypki](https://github.com/theparanoids/crypki) can be used as the CA signing backend of the service.
 
@@ -19,11 +18,10 @@ SSHRA is the registration authority of PSSHCA (Paranoids SSHCA).
 ## Install
 
 This installation guide assumes the use of [Crypki](https://github.com/theparanoids/crypki) as the signing backend.
-Password authentication is disabled (`PermitEmptyPasswords yes`, `AuthenticationMethods none`) in sshd config file
-at `docker/sshra/ssh/sshd_config.sshra`. You can customize it or pull in PAM modules for your own environments.
 
 **Disclaimer:** The following guidelines are to help you to get started with PSSHCA;
 > they should be used only for testing/development purposes.
+
 
 ### 1. Add authorized users
 
@@ -35,7 +33,10 @@ at `docker/sshra/ssh/sshd_config.sshra`. You can customize it or pull in PAM mod
 docker build -f ./docker/Dockerfile -t sshra-local .
 ```
 
-### 3. Generate credentials
+Password authentication is disabled (`PermitEmptyPasswords yes`, `AuthenticationMethods none`) in sshd config file
+at `docker/sshra/ssh/sshd_config.sshra`. You can customize it or pull in PAM modules for your own environments.
+
+### 3. Generate host certificates and user keys
 
 ```bash
 pushd ./docker
@@ -49,7 +50,7 @@ pushd ./docker
 popd
 ```
 
-### 4. Setup CA signing backend (Cripki)
+### 4. Setup CA signing backend (Crypki)
 
 Please refer to the section `Install` in [Crypki readme](https://github.com/theparanoids/crypki).
 
@@ -61,6 +62,8 @@ CRYPKI_CRT_PATH=${PATH_TO_CRYPKI_REPO}/docker-softhsm/tls-crt
 mkdir -p ./docker/tls-crt
 cp ${CRYPKI_CRT_PATH}/ca.crt ${CRYPKI_CRT_PATH}/client.crt ${CRYPKI_CRT_PATH}/client.key ./docker/tls-crt
 ```
+
+Note: **These steps configure Crypki to use SoftHSM. For production setup, a physical HSM or cloud HSM should be used.**
 
 ### 5. Run sshra container
 
@@ -80,7 +83,7 @@ docker network connect pki crypki
 popd
 ```
 
-### 6. Verify the SSH server in executed locally
+### 6. Verify the SSHRA server is up and running
 
 ```bash
 $telnet localhost 222 
@@ -102,7 +105,7 @@ Some default values are also provided in [`config.go`](go/config/config.go).
 
 ### SSH Certificate
 
-PSSHCA utilizes [Go SSH](https://pkg.go.dev/golang.org/x/crypto/ssh) to generate SSH certificates and CSRs, which follow the format defined in [OpenSSH](https://www.openssh.com/specs.html).  
+PSSHCA utilizes [Go SSH library](https://pkg.go.dev/golang.org/x/crypto/ssh) to generate SSH certificates and CSRs, which conforms to the format defined in [OpenSSH](https://www.openssh.com/specs.html).  
 PSSHCA defines an extensible key ID format for user certificates, and uses it to identify the types and usages of SSH certificates for different PAM modules.
 
 The `Key ID` field in a SSH certificate is typically used to identify in human-readable form the specific certificate signing key (potentially stored in an HSM), the specific user key wrapped by the certificate, or both.

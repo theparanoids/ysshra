@@ -86,16 +86,6 @@ func testMockGRPCServer(t *testing.T) (*proto.MockSigningServer, []grpc.DialOpti
 	dialOpts := []grpc.DialOption{
 		grpc.WithContextDialer(dialer),
 		grpc.WithInsecure(),
-		grpc.WithUnaryInterceptor(grpc_retry.UnaryClientInterceptor(
-			grpc_retry.WithMax(3),
-			// Test retry and backoff in Millisecond.
-			grpc_retry.WithPerRetryTimeout(5.0*time.Millisecond),
-			grpc_retry.WithBackoff((&backoff.Config{
-				BaseDelay:  30.0 * time.Millisecond,
-				Multiplier: 3.0,
-				MaxDelay:   500.0 * time.Millisecond,
-			}).Backoff)),
-		),
 	}
 	return mockServer, dialOpts
 }
@@ -114,7 +104,7 @@ func TestNewSignerValidationFailed(t *testing.T) {
 }
 
 func TestSignerPostUserSSHCertificate(t *testing.T) {
-	// Disable parallel to prevent race condition with TestSignerPostUserSSHCertificateTimeoutRetry.
+	// Disable parallel to prevent race condition with TestSignerPostUserSSHCertificateBackoffTimeoutRetry.
 	// Both test cases rely on the mock grpc server.
 	// t.Parallel()
 	validCSR := &proto.SSHCertificateSigningRequest{
@@ -154,7 +144,7 @@ func TestSignerPostUserSSHCertificate(t *testing.T) {
 			out:         &proto.SSHKey{},
 			expectedErr: status.Error(codes.Unavailable, "transport is closing"),
 		},
-		"server timeout": {
+		"deadline exceeded": {
 			csr:         invalidCSR3,
 			out:         &proto.SSHKey{},
 			expectedErr: status.Error(codes.DeadlineExceeded, "server request timeout"),
@@ -192,7 +182,7 @@ func TestSignerPostUserSSHCertificate(t *testing.T) {
 	}
 }
 
-func TestSignerPostUserSSHCertificateTimeoutRetry(t *testing.T) {
+func TestSignerPostUserSSHCertificateBackoffTimeoutRetry(t *testing.T) {
 	// Disable parallel to prevent race condition with TestSignerPostUserSSHCertificate.
 	// Both test cases rely on the mock grpc server.
 	// t.Parallel()
@@ -206,6 +196,16 @@ func TestSignerPostUserSSHCertificateTimeoutRetry(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
 	defer cancel()
 	mockServer, dialOpts := testMockGRPCServer(t)
+	dialOpts = append(dialOpts,
+		grpc.WithUnaryInterceptor(grpc_retry.UnaryClientInterceptor(
+			grpc_retry.WithMax(uint(expectedRetryTimes)),
+			// Test retry and backoff in Millisecond.
+			grpc_retry.WithPerRetryTimeout(100.0*time.Millisecond),
+			grpc_retry.WithBackoff((&backoff.Config{
+				BaseDelay:  30.0 * time.Millisecond,
+				Multiplier: 3.0,
+				MaxDelay:   500.0 * time.Millisecond,
+			}).Backoff))))
 	mockServer.
 		EXPECT().
 		PostUserSSHCertificate(gomock.Any(), mockhelper.String(invalidCSR)).

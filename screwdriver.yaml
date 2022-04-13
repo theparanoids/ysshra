@@ -17,6 +17,8 @@ shared:
 jobs:
   all:
     requires: [~pr, ~commit]
+    environment:
+      SDGO_SEMGREP_CHECK: true
     steps:
       - package-rpm: echo "skip package-rpm step in all job"
       - publish-to-artifactory: echo "skip publish-to-artifactory in all job"

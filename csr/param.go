@@ -116,6 +116,9 @@ func parseForceCommand(osArgs []string) (common.NamespacePolicy, string, error) 
 	if l < 3 {
 		return "", "", fmt.Errorf("failed to get namespace policy and handler name from force command: %q", strings.Join(args, " "))
 	}
+	if l > 6 {
+		return "", "", fmt.Errorf("length of the force command arguments exceeds the limitation: %q", strings.Join(args, " "))
+	}
 	namespacePolicy := common.NamespacePolicy(args[l-2])
 	if !common.ValidNamespacePolicy(namespacePolicy) {
 		return "", "", fmt.Errorf("failed to validate namespace policy %q from force command: %q", namespacePolicy, strings.Join(args, " "))

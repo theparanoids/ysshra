@@ -17,6 +17,9 @@ import (
 // file and returns *rsa.PrivateKey, *dsa.PrivateKey
 // or *ecdsa.PrivateKeyrsa; otherwise, an error is returned.
 func GetPrivateKeyFromFile(file string) (interface{}, error) {
+	if err := validateKeyFile(file); err != nil {
+		return nil, err
+	}
 	buffer, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, err
@@ -62,6 +65,9 @@ func GetPublicKeyFromFile(file string) (key ssh.PublicKey, comment string, err e
 
 // GetPublicKeysFromFile returns a slice of SSH public keys from the given file; otherwise, an error is returned.
 func GetPublicKeysFromFile(file string) (keys []ssh.PublicKey, comments []string, err error) {
+	if err := validateKeyFile(file); err != nil {
+		return nil, nil, err
+	}
 	data, err := ioutil.ReadFile(file)
 	if err != nil {
 		return nil, nil, err

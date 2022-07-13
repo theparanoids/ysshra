@@ -1,0 +1,125 @@
+#!/bin/sh
+# Init file for OpenSSH server daemon listening on port 222 for RA
+
+# Source function library.
+. /lib/lsb/init-functions
+
+RETVAL=0
+PROG="sshra"
+
+SSHD=/usr/sbin/sshd-sshra
+CONFIG_FILE=/etc/ssh/sshd_config.sshra
+ERRFILE=/var/log/sshra/sshra-init-err.log
+LOGFILE=/var/log/sshra/sshra-init.log
+
+MAP_DIR=/opt/sshra
+EXT_HOST_KEY="${MAP_DIR}/ssh-crt/hostkey"
+EXT_HOST_CERT="${MAP_DIR}/ssh-crt/hostkey-cert.pub"
+EXT_HOST_PUB="${MAP_DIR}/ssh-crt/hostkey.pub"
+
+HOST_KEY="/etc/ssh/ssh_hostkey"
+HOST_CERT="/etc/ssh/ssh_hostkey-cert.pub"
+HOST_PUB="/etc/ssh/ssh_hostkey.pub"
+
+# Copy SSH keys/certs/known_hosts files required for SSHD.
+do_copy_ssh_keys () {
+  if [ -s ${EXT_HOST_KEY} ] && [ -s ${EXT_HOST_CERT} ]; then
+    echo "$(date '+%F %T'): ssh_hostkey" >> ${LOGFILE}
+    #echo "Copying host key from ${MAP_DIR}: "
+    cp ${EXT_HOST_KEY} ${HOST_KEY}
+    cp ${EXT_HOST_CERT} ${HOST_CERT}
+    if [ -s ${EXT_HOST_PUB} ]; then
+      cp ${EXT_HOST_PUB} ${HOST_PUB}
+    fi
+  else
+    echo "$(date '+%F %T'): ERROR: SSH host key(${EXT_HOST_KEY}) or cert (${EXT_HOST_CERT}) not found, cannot continue ......" | tee ${LOGFILE} ${ERRFILE}
+    exit 1
+  fi
+}
+
+do_link_bin() {
+  echo "$(date '+%F %T'): Linking /usr/sbin/sshd to ${SSHD}." >> ${LOGFILE}
+  if [ ! -x ${SSHD} ]; then
+    ln /usr/sbin/sshd ${SSHD}
+  fi
+}
+
+# The docker stop command sends a SIGTERM, waits 10 seconds for us to exit, then
+# sends a SIGKILL. We respond to the SIGTERM by immediately shutting down our SSHD
+# thus preventing new connections. Then we sleep long enough to allow most in-flight
+# transactions to complete.  Finally, we exit 0.
+stop_gracefully()
+{
+  echo "$(date '+%F %T'): Got SIGTERM." >> ${LOGFILE}
+
+  # Kill SSHD immediately, to prevent new connections
+  echo "$(date '+%F %T'): killing ${SSHD}" >> ${LOGFILE}
+  killproc ${SSHD} -TERM
+  echo "$(date '+%F %T'): ${SSHD} stopped" >> ${LOGFILE}
+
+  # sleep a few seconds to allow in-flight transactions to complete
+  sleep 7
+
+  echo "$(date '+%F %T'): exiting" >> ${LOGFILE}
+  exit 0 # exit 0 prevents docker from restarting the docker image.
+}
+
+trap stop_gracefully TERM
+
+start()
+{
+  do_copy_ssh_keys
+
+  do_link_bin
+
+  mkdir -p /run/sshd # Require privilege separation directory in debian.
+
+  echo "$(date '+%F %T'): Starting ${PROG}:" >> ${LOGFILE}
+  echo -n "Starting ${PROG}:"
+  ${SSHD} -f $CONFIG_FILE -E /var/log/sshra/sshd.log
+  echo -n "Started ${PROG} Success"
+
+  sleep infinity
+}
+
+stop()
+{
+  echo "$(date '+%F %T'): Stopping ${PROG}:"  >> ${LOGFILE}
+  echo -n "Stopping ${PROG}:"
+  killproc ${SSHD} -TERM
+  echo -n "Stopped ${PROG} Success"
+}
+
+reload()
+{
+  echo "$(date '+%F %T'): Reloading ${PROG}:" >> ${LOGFILE}
+  echo -n "Reloading ${PROG}:"
+  killproc ${SSHD} -HUP
+  RETVAL=$?
+  echo
+}
+
+case "$1" in
+  start)
+    start
+    ;;
+  stop)
+    stop
+    ;;
+  restart)
+    stop
+    sleep 5
+    start
+    ;;
+  force-reload)
+    reload
+    ;;
+  status)
+    status ${SSHD}
+    RETVAL=$?
+    ;;
+  *)
+    echo "Usage: $0 {start|stop|restart|force-reload|status}"
+    RETVAL=1
+esac
+exit $RETVAL

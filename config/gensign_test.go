@@ -31,7 +31,7 @@ func TestNewGensignConfig(t *testing.T) {
 						"sshca_failure_retry" : 5,
 						"handlers": {
 							"Regular": {
-								"public_key_dir": "/etc/ssh/sshra/pubkey"
+								"public_key_dir": "/etc/ssh/ysshra/pubkey"
 							}
 						},
 						"signer": {
@@ -52,7 +52,7 @@ func TestNewGensignConfig(t *testing.T) {
 				SSHCAFailureRetry:   5,
 				HandlerConfig: map[string]handlerConfMap{
 					"Regular": {
-						"public_key_dir": "/etc/ssh/sshra/pubkey",
+						"public_key_dir": "/etc/ssh/ysshra/pubkey",
 					},
 				},
 				SignerConfig: map[string]interface{}{
@@ -73,7 +73,7 @@ func TestNewGensignConfig(t *testing.T) {
 						"sshca_failure_retry" : 5,
 						"handlers": {
 							"Regular": {
-								"public_key_dir": "/etc/ssh/sshra/pubkey"
+								"public_key_dir": "/etc/ssh/ysshra/pubkey"
 							}
 						},
 						"signer": {
@@ -95,7 +95,7 @@ func TestNewGensignConfig(t *testing.T) {
 				SSHCAFailureRetry:   5,
 				HandlerConfig: map[string]handlerConfMap{
 					"Regular": {
-						"public_key_dir": "/etc/ssh/sshra/pubkey",
+						"public_key_dir": "/etc/ssh/ysshra/pubkey",
 					},
 				},
 				SignerConfig: map[string]interface{}{

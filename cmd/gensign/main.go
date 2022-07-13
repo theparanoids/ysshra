@@ -21,8 +21,8 @@ import (
 )
 
 const (
-	confPath = "/opt/sshra/config.json"
-	logFile  = "/var/log/sshra/gensign.log"
+	confPath = "/opt/ysshra/config.json"
+	logFile  = "/var/log/ysshra/gensign.log"
 )
 
 var handlerCreators = map[string]gensign.CreateHandler{

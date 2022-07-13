@@ -27,7 +27,7 @@ AcceptEnv LC_IDENTIFICATION LC_ALL LANGUAGE
 AcceptEnv XMODIFIERS
 
 X11Forwarding yes
-PidFile /var/run/sshd-sshra.pid
+PidFile /var/run/sshd-ysshra.pid
 
 Subsystem	sftp	/usr/libexec/openssh/sftp-server
 

@@ -5,14 +5,14 @@
 . /lib/lsb/init-functions
 
 RETVAL=0
-PROG="sshra"
+PROG="ysshra"
 
-SSHD=/usr/sbin/sshd-sshra
-CONFIG_FILE=/etc/ssh/sshd_config.sshra
-ERRFILE=/var/log/sshra/sshra-init-err.log
-LOGFILE=/var/log/sshra/sshra-init.log
+SSHD=/usr/sbin/sshd-ysshra
+CONFIG_FILE=/etc/ssh/sshd_config.ysshra
+ERRFILE=/var/log/ysshra/ysshra-init-err.log
+LOGFILE=/var/log/ysshra/ysshra-init.log
 
-MAP_DIR=/opt/sshra
+MAP_DIR=/opt/ysshra
 EXT_HOST_KEY="${MAP_DIR}/ssh-crt/hostkey"
 EXT_HOST_CERT="${MAP_DIR}/ssh-crt/hostkey-cert.pub"
 EXT_HOST_PUB="${MAP_DIR}/ssh-crt/hostkey.pub"
@@ -76,7 +76,7 @@ start()
 
   echo "$(date '+%F %T'): Starting ${PROG}:" >> ${LOGFILE}
   echo -n "Starting ${PROG}:"
-  ${SSHD} -f $CONFIG_FILE -E /var/log/sshra/sshd.log
+  ${SSHD} -f $CONFIG_FILE -E /var/log/ysshra/sshd.log
   echo -n "Started ${PROG} Success"
 
   sleep infinity

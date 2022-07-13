@@ -15,7 +15,7 @@ import (
 // CriticalOptionTouchlessSudoHosts is a critical option in the cert to set a list of hosts with both touchless ssh and touchless sudo credentials valid.
 const CriticalOptionTouchlessSudoHosts = "touchless-sudo-hosts"
 
-// Type indicates the type of ssh cert provisioned by SSHRA.
+// Type indicates the type of ssh cert provisioned by YSSHRA.
 // Steps required to define a new kind of certificate, in that order:
 // 1. Add the new CertType below
 // 2. Update GetType() function to ensure we have a unique way to identify
@@ -33,7 +33,7 @@ const (
 	TouchSudoCert
 	// TouchlessCert is the certificate which does not require a touch for SSH authentication.
 	// TouchlessCert's private key is backed in a smartcard.
-	// Note: TouchlessCert can be used for SUDO authentication by defining a touchless cert filter in PAM SSHCA.
+	// Note: TouchlessCert can be used for SUDO authentication by defining a touchless cert filter in PAM YSSHCA.
 	TouchlessCert
 	// TouchlessSudoCert is the certificate which does not require a touch for SSH or SUDO authentication on a set of hosts.
 	// TouchlessSudoCert's private key is backed in a smartcard.
@@ -46,7 +46,7 @@ const (
 	_ // deprecated
 	// TouchlessInAgentCert is the certificate which does not require a touch for SSH authentication.
 	// TouchlessInAgentCert's private key is backed in SSH-agent.
-	// Note: TouchlessInAgentCert can be used for SUDO authentication by defining a customized cert filter in PAM SSHCA.
+	// Note: TouchlessInAgentCert can be used for SUDO authentication by defining a customized cert filter in PAM YSSHCA.
 	TouchlessInAgentCert
 	// TouchlessSudoInAgentCert is the certificate which does not require a touch for SUDO authentication on a set of hosts.
 	// TouchlessSudoInAgentCert's private key is backed in SSH-agent.
@@ -65,7 +65,7 @@ var TypeLabel = map[Type]string{
 }
 
 // GetType returns the certificate type based on different keyid and certificate options
-// set by sshra gensign.
+// set by ysshra gensign.
 func GetType(cert *ssh.Certificate) Type {
 	certType := UnknownCertType
 	if cert == nil {

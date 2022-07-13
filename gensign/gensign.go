@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
-	"go.vzbuilders.com/peng/sshra-oss/csr"
-	"go.vzbuilders.com/peng/sshra-oss/internal/logkey"
+	"github.com/theparanoids/ysshura/csr"
+	"github.com/theparanoids/ysshura/internal/logkey"
 	"golang.org/x/crypto/ssh"
 )
 

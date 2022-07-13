@@ -11,13 +11,13 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"go.vzbuilders.com/peng/sshra-oss/agent/ssh"
-	"go.vzbuilders.com/peng/sshra-oss/config"
-	"go.vzbuilders.com/peng/sshra-oss/crypki"
-	"go.vzbuilders.com/peng/sshra-oss/csr"
-	"go.vzbuilders.com/peng/sshra-oss/gensign"
-	"go.vzbuilders.com/peng/sshra-oss/gensign/regular"
-	"go.vzbuilders.com/peng/sshra-oss/internal/logkey"
+	"github.com/theparanoids/ysshura/agent/ssh"
+	"github.com/theparanoids/ysshura/config"
+	"github.com/theparanoids/ysshura/crypki"
+	"github.com/theparanoids/ysshura/csr"
+	"github.com/theparanoids/ysshura/gensign"
+	"github.com/theparanoids/ysshura/gensign/regular"
+	"github.com/theparanoids/ysshura/internal/logkey"
 )
 
 const (

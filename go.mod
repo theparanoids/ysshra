@@ -1,4 +1,4 @@
-module go.vzbuilders.com/peng/sshra-oss
+module github.com/theparanoids/ysshura
 
 go 1.17
 

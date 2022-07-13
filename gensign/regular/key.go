@@ -5,7 +5,7 @@ package regular
 
 import (
 	"github.com/theparanoids/crypki/proto"
-	"go.vzbuilders.com/peng/sshra-oss/agent/ssh"
+	"github.com/theparanoids/ysshura/agent/ssh"
 )
 
 // csrAgentKey implements csr.AgentKey.

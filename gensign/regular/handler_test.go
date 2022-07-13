@@ -10,11 +10,11 @@ import (
 	"path"
 	"testing"
 
-	"go.vzbuilders.com/peng/sshra-oss/common"
-	"go.vzbuilders.com/peng/sshra-oss/csr"
-	"go.vzbuilders.com/peng/sshra-oss/csr/transid"
-	"go.vzbuilders.com/peng/sshra-oss/message"
-	"go.vzbuilders.com/peng/sshra-oss/sshutils/version"
+	"github.com/theparanoids/ysshura/common"
+	"github.com/theparanoids/ysshura/csr"
+	"github.com/theparanoids/ysshura/csr/transid"
+	"github.com/theparanoids/ysshura/message"
+	"github.com/theparanoids/ysshura/sshutils/version"
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 )

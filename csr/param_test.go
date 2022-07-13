@@ -8,9 +8,9 @@ import (
 	"reflect"
 	"testing"
 
-	"go.vzbuilders.com/peng/sshra-oss/common"
-	"go.vzbuilders.com/peng/sshra-oss/message"
-	"go.vzbuilders.com/peng/sshra-oss/sshutils/version"
+	"github.com/theparanoids/ysshura/common"
+	"github.com/theparanoids/ysshura/message"
+	"github.com/theparanoids/ysshura/sshutils/version"
 )
 
 func TestNewReqParam(t *testing.T) {

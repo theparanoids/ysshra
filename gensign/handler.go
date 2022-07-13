@@ -6,8 +6,8 @@ package gensign
 import (
 	"net"
 
-	"go.vzbuilders.com/peng/sshra-oss/config"
-	"go.vzbuilders.com/peng/sshra-oss/csr"
+	"github.com/theparanoids/ysshura/config"
+	"github.com/theparanoids/ysshura/csr"
 )
 
 // CreateHandler is the interface function to initialize Handler.

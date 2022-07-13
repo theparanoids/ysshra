@@ -13,10 +13,10 @@ import (
 	"sort"
 	"sync"
 
-	"go.vzbuilders.com/peng/sshra-oss/agent/ssh/connection"
-	"go.vzbuilders.com/peng/sshra-oss/keyid"
-	certutil "go.vzbuilders.com/peng/sshra-oss/sshutils/cert"
-	keyutil "go.vzbuilders.com/peng/sshra-oss/sshutils/key"
+	"github.com/theparanoids/ysshura/agent/ssh/connection"
+	"github.com/theparanoids/ysshura/keyid"
+	certutil "github.com/theparanoids/ysshura/sshutils/cert"
+	keyutil "github.com/theparanoids/ysshura/sshutils/key"
 
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"

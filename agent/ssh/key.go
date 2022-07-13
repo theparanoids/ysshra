@@ -6,7 +6,7 @@ package ssh
 import (
 	"fmt"
 
-	"go.vzbuilders.com/peng/sshra-oss/sshutils/key"
+	"github.com/theparanoids/ysshura/sshutils/key"
 	"golang.org/x/crypto/ssh"
 	ag "golang.org/x/crypto/ssh/agent"
 )

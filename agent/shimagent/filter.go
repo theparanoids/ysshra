@@ -7,8 +7,8 @@ import (
 	"go.uber.org/multierr"
 	"time"
 
-	certutil "github.com/theparanoids/ysshura/sshutils/cert"
-	keyutil "github.com/theparanoids/ysshura/sshutils/key"
+	certutil "github.com/theparanoids/ysshra/sshutils/cert"
+	keyutil "github.com/theparanoids/ysshra/sshutils/key"
 
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"

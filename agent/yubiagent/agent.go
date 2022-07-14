@@ -7,7 +7,7 @@ import (
 	"crypto/x509"
 	"time"
 
-	"github.com/theparanoids/ysshura/agent/shimagent"
+	"github.com/theparanoids/ysshra/agent/shimagent"
 )
 
 // YubiAgent is an interface that extends the functionality

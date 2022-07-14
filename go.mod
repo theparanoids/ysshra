@@ -1,4 +1,4 @@
-module github.com/theparanoids/ysshura
+module github.com/theparanoids/ysshra
 
 go 1.17
 

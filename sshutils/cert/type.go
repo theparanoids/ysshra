@@ -9,7 +9,7 @@ import (
 
 	"golang.org/x/crypto/ssh"
 
-	"github.com/theparanoids/ysshura/keyid"
+	"github.com/theparanoids/ysshra/keyid"
 )
 
 // CriticalOptionTouchlessSudoHosts is a critical option in the cert to set a list of hosts with both touchless ssh and touchless sudo credentials valid.

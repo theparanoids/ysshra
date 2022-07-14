@@ -8,9 +8,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/theparanoids/ysshura/common"
-	"github.com/theparanoids/ysshura/message"
-	"github.com/theparanoids/ysshura/sshutils/version"
+	"github.com/theparanoids/ysshra/common"
+	"github.com/theparanoids/ysshra/message"
+	"github.com/theparanoids/ysshra/sshutils/version"
 )
 
 func TestNewReqParam(t *testing.T) {

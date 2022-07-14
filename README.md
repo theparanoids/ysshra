@@ -1,5 +1,5 @@
-# YSSHURA 
-YSSHURA is the registration authority of YSSHCA (Yahoo SSHCA).
+# YSSHRA 
+YSSHRA is the registration authority of YSSHCA (Yahoo SSHCA).
 
 >
 > A service to authenticate the client and provision ephemeral SSH user certificate.

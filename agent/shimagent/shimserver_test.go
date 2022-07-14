@@ -7,7 +7,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
-	"github.com/theparanoids/ysshura/sshutils/key"
+	"github.com/theparanoids/ysshra/sshutils/key"
 	"math/big"
 	"sort"
 	"sync"

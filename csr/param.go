@@ -10,10 +10,10 @@ import (
 	"net"
 	"strings"
 
-	"github.com/theparanoids/ysshura/common"
-	"github.com/theparanoids/ysshura/csr/transid"
-	"github.com/theparanoids/ysshura/message"
-	"github.com/theparanoids/ysshura/sshutils/version"
+	"github.com/theparanoids/ysshra/common"
+	"github.com/theparanoids/ysshra/csr/transid"
+	"github.com/theparanoids/ysshra/message"
+	"github.com/theparanoids/ysshra/sshutils/version"
 )
 
 // ReqParam stores options to invoke gensign.Handler.

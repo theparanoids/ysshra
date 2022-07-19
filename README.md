@@ -1,5 +1,5 @@
-# PSSHCA SSHRA
-SSHRA is the registration authority of PSSHCA (Paranoids SSHCA).
+# YSSHRA 
+YSSHRA is the registration authority of YSSHCA (Yahoo SSHCA).
 
 >
 > A service to authenticate the client and provision ephemeral SSH user certificate.
@@ -19,22 +19,22 @@ SSHRA is the registration authority of PSSHCA (Paranoids SSHCA).
 
 This installation guide assumes the use of [Crypki](https://github.com/theparanoids/crypki) as the signing backend.
 
-**Disclaimer:** The following guidelines are to help you to get started with PSSHCA;
+**Disclaimer:** The following guidelines are to help you to get started with YSSHCA;
 > they should be used only for testing/development purposes.
 
 
 ### 1. Add authorized users
 
-* Add your username into `docker/sshra/user_allowlist.txt`.
+* Add your username into `docker/ysshra/user_allowlist.txt`.
 
-### 2. Build sshra docker image
+### 2. Build ysshra docker image
 
 ```bash
-docker build -f ./docker/Dockerfile -t sshra-local .
+docker build -f ./docker/Dockerfile -t ysshra-local .
 ```
 
 Password authentication is disabled (`PermitEmptyPasswords yes`, `AuthenticationMethods none`) in sshd config file
-at `docker/sshra/ssh/sshd_config.sshra`. You can customize it or pull in PAM modules for your own environments.
+at `docker/ysshra/ssh/sshd_config.ysshra`. You can customize it or pull in PAM modules for your own environments.
 
 ### 3. Generate host certificates and user keys
 
@@ -45,7 +45,7 @@ pushd ./docker
 ./gen-ssh-crt.sh
 
 # Generate ssh user keys.
-./gen-user-key.sh ./sshra/user_allowlist.txt
+./gen-user-key.sh ./ysshra/user_allowlist.txt
 
 popd
 ```
@@ -65,25 +65,25 @@ cp ${CRYPKI_CRT_PATH}/ca.crt ${CRYPKI_CRT_PATH}/client.crt ${CRYPKI_CRT_PATH}/cl
 
 Note: **These steps configure Crypki to use SoftHSM. For production setup, a physical HSM or cloud HSM should be used.**
 
-### 5. Run sshra container
+### 5. Run ysshra container
 
 ```bash
 pushd ./docker
 
-docker run -d -p :222:222 -v $PWD/log:/var/log/sshra -v $PWD/tls-crt:/opt/sshra/tls-crt:ro \
--v $PWD/ssh-crt:/opt/sshra/ssh-crt:ro -v $PWD/config.sample.json:/opt/sshra/config.json \
+docker run -d -p :222:222 -v $PWD/log:/var/log/ysshra -v $PWD/tls-crt:/opt/ysshra/tls-crt:ro \
+-v $PWD/ssh-crt:/opt/ysshra/ssh-crt:ro -v $PWD/config.sample.json:/opt/ysshra/config.json \
 -v $PWD/ssh-user:/etc/ssh/authorized_public_keys/ \
---rm --name sshra -h "localhost" sshra-local 
+--rm --name ysshra -h "localhost" ysshra-local 
 
-# setup network for sshra container and crypki container. 
+# setup network for ysshra container and crypki container. 
 docker network create pki
-docker network connect pki sshra
+docker network connect pki ysshra
 docker network connect pki crypki
 
 popd
 ```
 
-### 6. Verify the SSHRA server is up and running
+### 6. Verify the YSSHRA server is up and running
 
 ```bash
 $telnet localhost 222 
@@ -93,11 +93,11 @@ Escape character is '^]'.
 SSH-2.0-OpenSSH_8.9p1 Debian-3
 ```
 
-You may then refer to [the regular-cert steps](#certificate-type-regular) to request a user certificate from the SSHRA container.
+You may then refer to [the regular-cert steps](#certificate-type-regular) to request a user certificate from the YSSHRA container.
 
 ## Configuration
 
-We include a valid gensign configuration file [here](config.sample.json) in the SSHRA docker.
+We include a valid gensign configuration file [here](config.sample.json) in the YSSHRA docker.
 
 Some default values are also provided in [`config.go`](go/config/config.go).
 
@@ -105,14 +105,14 @@ Some default values are also provided in [`config.go`](go/config/config.go).
 
 ### SSH Certificate
 
-PSSHCA utilizes [Go SSH library](https://pkg.go.dev/golang.org/x/crypto/ssh) to generate SSH certificates and CSRs, which conforms to the format defined in [OpenSSH](https://www.openssh.com/specs.html).  
-PSSHCA defines an extensible key ID format for user certificates, and uses it to identify the types and usages of SSH certificates for different PAM modules.
+YSSHCA utilizes [Go SSH library](https://pkg.go.dev/golang.org/x/crypto/ssh) to generate SSH certificates and CSRs, which conforms to the format defined in [OpenSSH](https://www.openssh.com/specs.html).  
+YSSHCA defines an extensible key ID format for user certificates, and uses it to identify the types and usages of SSH certificates for different PAM modules.
 
 The `Key ID` field in a SSH certificate is typically used to identify in human-readable form the specific certificate signing key (potentially stored in an HSM), the specific user key wrapped by the certificate, or both.
-However, PSSHCA `Key ID` is in JSON format, which enables gensign and different CSR handlers (or modules) to fill detailed information into CSR and certificates.
-Compared to other certificate attributes (e.g. critical options), `Key ID` can be logged in OpenSSH during SSH handshake and in SSHRA gensign easily.
+However, YSSHCA `Key ID` is in JSON format, which enables gensign and different CSR handlers (or modules) to fill detailed information into CSR and certificates.
+Compared to other certificate attributes (e.g. critical options), `Key ID` can be logged in OpenSSH during SSH handshake and in YSSHRA gensign easily.
 
-Following is a regular SSH certificate generated by SSHRA. The certificate principals (`prins`), transaction ID (`transID`),
+Following is a regular SSH certificate generated by YSSHRA. The certificate principals (`prins`), transaction ID (`transID`),
 request user (`reqUser`), request IP (`reqIP`), request host (`reqHost`) and Key ID version (`ver`) can be found in the parsed certificate.
 
 ```
@@ -136,13 +136,13 @@ Other fields are defined as follows:
 
 ### Certificate Type
 
-SSHRA declares [Handler](./gensign/handler.go) interface to define the behaviors that handle users' SSH certificate requests.
+YSSHRA declares [Handler](./gensign/handler.go) interface to define the behaviors that handle users' SSH certificate requests.
 A handler generate various types of CSRs for a particular scenario usage.
-The handler can be configured in gensign config path (`/opt/sshra/config.json`).
+The handler can be configured in gensign config path (`/opt/ysshra/config.json`).
 
 ### Certificate Type: Regular
 
-SSHRA provides [Regular Handler](./gensign/regular) to generate regular CSRs for a non-yubikey scenario.
+YSSHRA provides [Regular Handler](./gensign/regular) to generate regular CSRs for a non-yubikey scenario.
 That is, a user presents the regular certificate to a SSH/SUDO PAM module.
 Then the module authenticate the user by key challenge against the priv key in the user's SSH agent without a touch.
 The key ID fields of a regular certificate are shown as follows:
@@ -156,9 +156,9 @@ The key ID fields of a regular certificate are shown as follows:
 | usage         | 0 (All Usages)  |
 | touchPolicy   | 1 (Never Touch) |
 
-#### Request a regular user certificate from the sshra container
+#### Request a regular user certificate from the ysshra container
 
-Note: `user_a` exists in `docker/sshra/user_allowlist.txt`, and the corresponding linux user was created in sshra container during the docker build.
+Note: `user_a` exists in `docker/ysshra/user_allowlist.txt`, and the corresponding linux user was created in ysshra container during the docker build.
 
 * Add `user_a`'s private key to the ssh-agent
 
@@ -166,7 +166,7 @@ Note: `user_a` exists in `docker/sshra/user_allowlist.txt`, and the correspondin
 ssh-add -K ./docker/ssh-user/user_a
 ```
 
-* ssh against the sshra container
+* ssh against the ysshra container
 
 ```bash
 ssh -A user_a@localhost -p 222 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no \

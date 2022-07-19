@@ -181,9 +181,9 @@ func (kid *KeyID) SetHumanUser() {
 }
 
 // GetProperty returns the string value of a property looked up by the given name.
-// Package pam-sshca relies on the fields in KeyID. We don't want to update the pam-sshca and modify the config file
+// Package pam-ysshca relies on the fields in KeyID. We don't want to update the pam-ysshca and modify the config file
 // on destination hosts everytime when there are any changes to the key id format (e.g. json tags).
-// Hence we extract the value of the property by switch cases here.
+// Hence, we extract the value of the property by switch cases here.
 func (kid *KeyID) GetProperty(name string) string {
 	switch name {
 	case "touchPolicy":

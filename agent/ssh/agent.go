@@ -11,7 +11,7 @@ import (
 	"os"
 	"strings"
 
-	"github.com/theparanoids/ysshura/agent/ssh/connection"
+	"github.com/theparanoids/ysshra/agent/ssh/connection"
 	"golang.org/x/crypto/ssh"
 	ag "golang.org/x/crypto/ssh/agent"
 )

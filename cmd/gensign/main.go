@@ -11,18 +11,18 @@ import (
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
-	"github.com/theparanoids/ysshura/agent/ssh"
-	"github.com/theparanoids/ysshura/config"
-	"github.com/theparanoids/ysshura/crypki"
-	"github.com/theparanoids/ysshura/csr"
-	"github.com/theparanoids/ysshura/gensign"
-	"github.com/theparanoids/ysshura/gensign/regular"
-	"github.com/theparanoids/ysshura/internal/logkey"
+	"github.com/theparanoids/ysshra/agent/ssh"
+	"github.com/theparanoids/ysshra/config"
+	"github.com/theparanoids/ysshra/crypki"
+	"github.com/theparanoids/ysshra/csr"
+	"github.com/theparanoids/ysshra/gensign"
+	"github.com/theparanoids/ysshra/gensign/regular"
+	"github.com/theparanoids/ysshra/internal/logkey"
 )
 
 const (
-	confPath = "/opt/sshra/config.json"
-	logFile  = "/var/log/sshra/gensign.log"
+	confPath = "/opt/ysshra/config.json"
+	logFile  = "/var/log/ysshra/gensign.log"
 )
 
 var handlerCreators = map[string]gensign.CreateHandler{

@@ -6,8 +6,8 @@ package gensign
 import (
 	"net"
 
-	"github.com/theparanoids/ysshura/config"
-	"github.com/theparanoids/ysshura/csr"
+	"github.com/theparanoids/ysshra/config"
+	"github.com/theparanoids/ysshra/csr"
 )
 
 // CreateHandler is the interface function to initialize Handler.

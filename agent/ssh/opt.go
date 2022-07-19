@@ -4,7 +4,7 @@
 package ssh
 
 import (
-	"github.com/theparanoids/ysshura/sshutils/key"
+	"github.com/theparanoids/ysshra/sshutils/key"
 	"golang.org/x/crypto/ssh/agent"
 )
 

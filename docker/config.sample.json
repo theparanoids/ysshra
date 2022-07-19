@@ -16,9 +16,9 @@
     [
       "crypki"
     ],
-    "tls_client_key_file": "/opt/sshra/tls-crt/client.key",
-    "tls_client_cert_file": "/opt/sshra/tls-crt/client.crt",
-    "tls_ca_cert_files": ["/opt/sshra/tls-crt/ca.crt"],
+    "tls_client_key_file": "/opt/ysshra/tls-crt/client.key",
+    "tls_client_cert_file": "/opt/ysshra/tls-crt/client.crt",
+    "tls_ca_cert_files": ["/opt/ysshra/tls-crt/ca.crt"],
     "retries": 3
   }
 }

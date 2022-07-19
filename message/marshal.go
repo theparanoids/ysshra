@@ -37,7 +37,7 @@ func (a *Attributes) Marshal() (string, error) {
 
 	attrBytes, err := json.Marshal(a)
 	if err != nil {
-		return "", fmt.Errorf("failed to marshal sshra gensign attributes: %v", err)
+		return "", fmt.Errorf("failed to marshal ysshra gensign attributes: %v", err)
 	}
 	return string(attrBytes), nil
 }

@@ -22,7 +22,6 @@ on:
 
 jobs:
   license-check:
-    name: license boilerplate check
     runs-on: ubuntu-latest
     steps:
       - name: Setup Go
@@ -38,6 +37,6 @@ jobs:
       - name: Check license headers
         run: |
           set -e
-          addlicense -check -l apache -c 'The Sigstore Authors' -ignore "third_party/**" -v *
+          addlicense -l apache -c 'Yahoo,' -ignore "third_party/**" -v *
           git diff --exit-code
 

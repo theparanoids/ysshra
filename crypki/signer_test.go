@@ -76,7 +76,9 @@ func testMockGRPCServer(t *testing.T) (*proto.MockSigningServer, []grpc.DialOpti
 		t.Cleanup(func() {
 			s.Stop()
 		})
-		s.Serve(listener)
+		if err := s.Serve(listener); err != nil {
+			t.Error(err)
+		}
 	}()
 
 	dialer := func(ctx context.Context, s string) (net.Conn, error) {

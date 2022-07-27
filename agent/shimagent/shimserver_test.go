@@ -33,7 +33,10 @@ func testServer(t *testing.T, noUpstream bool) ShimAgent {
 		if err != nil {
 			return
 		}
-		ag.ServeAgent(keyring, conn)
+		err = ag.ServeAgent(keyring, conn)
+		if err != nil {
+			t.Fatal(err)
+		}
 	}()
 	s, err := New(Option{
 		Address:    listener.Addr().String(),
@@ -56,28 +59,6 @@ func createPublicKey() (*rsa.PrivateKey, ssh.PublicKey, error) {
 		return nil, nil, err
 	}
 	return priv, pub, nil
-}
-
-// createSelfsignCert create an one-hour selfsigned certificate for unit tests
-func createSelfsignCert(KeyID string) (*rsa.PrivateKey, *ssh.Certificate, error) {
-	priv, pub, err := createPublicKey()
-	if err != nil {
-		return nil, nil, err
-	}
-	signer, err := ssh.NewSignerFromKey(priv)
-	if err != nil {
-		return nil, nil, err
-	}
-	var cert = ssh.Certificate{
-		Key:         pub,
-		KeyId:       KeyID,
-		ValidAfter:  uint64(time.Now().Unix()),
-		ValidBefore: uint64(time.Now().Add(time.Hour).Unix()),
-	}
-	if err = cert.SignCert(rand.Reader, signer); err != nil {
-		return nil, nil, err
-	}
-	return priv, &cert, nil
 }
 
 func TestServer_filter(t *testing.T) {
@@ -474,7 +455,9 @@ func TestListWithKeyIDv1(t *testing.T) {
 			var once sync.Once
 			addPrivKey := func() {
 				once.Do(func() {
-					server.Add(ag.AddedKey{PrivateKey: priv, Comment: "InAgentKey"})
+					if err := server.Add(ag.AddedKey{PrivateKey: priv, Comment: "InAgentKey"}); err != nil {
+						t.Fatal(err)
+					}
 				})
 			}
 
@@ -496,7 +479,9 @@ func TestListWithKeyIDv1(t *testing.T) {
 				// Create Always Touch cert.
 				if tt.AlwaysTouch {
 					addPrivKey()
-					server.AddHardCert(certAlwaysTouch, "certAlwaysTouch")
+					if err := server.AddHardCert(certAlwaysTouch, "certAlwaysTouch"); err != nil {
+						t.Error(err)
+					}
 				}
 			}()
 
@@ -508,7 +493,9 @@ func TestListWithKeyIDv1(t *testing.T) {
 				// Create Always Touch cert with CriticalOptions.
 				if tt.AlwaysTouchCriticalOptions {
 					addPrivKey()
-					server.AddHardCert(certAlwaysTouchWithCriticalOptions, "certAlwaysTouchWithCriticalOptions")
+					if err := server.AddHardCert(certAlwaysTouchWithCriticalOptions, "certAlwaysTouchWithCriticalOptions"); err != nil {
+						t.Error(err)
+					}
 				}
 			}()
 
@@ -520,7 +507,9 @@ func TestListWithKeyIDv1(t *testing.T) {
 				// Create Never Touch cert.
 				if tt.Touchless {
 					addPrivKey()
-					server.AddHardCert(certTouchless, "certTouchless")
+					if err := server.AddHardCert(certTouchless, "certTouchless"); err != nil {
+						t.Error(err)
+					}
 				}
 			}()
 
@@ -532,12 +521,16 @@ func TestListWithKeyIDv1(t *testing.T) {
 				// Create Always Touch cert with CriticalOptions.
 				if tt.AlwaysTouchCriticalOptions {
 					addPrivKey()
-					server.AddHardCert(certAlwaysTouchWithCriticalOptions, "certAlwaysTouchWithCriticalOptions")
+					if err := server.AddHardCert(certAlwaysTouchWithCriticalOptions, "certAlwaysTouchWithCriticalOptions"); err != nil {
+						t.Error(err)
+					}
 				}
 			}()
 			// Create Never Touch in-agent cert.
 			if tt.TouchlessInAgent {
-				server.Add(ag.AddedKey{PrivateKey: priv, Certificate: certTouchlessInAgent, Comment: "certTouchlessInAgent"})
+				if err := server.Add(ag.AddedKey{PrivateKey: priv, Certificate: certTouchlessInAgent, Comment: "certTouchlessInAgent"}); err != nil {
+					t.Fatal(err)
+				}
 			}
 
 			wg.Add(1)
@@ -548,7 +541,9 @@ func TestListWithKeyIDv1(t *testing.T) {
 				// Create Cached Touch cert.
 				if tt.CachedTouch {
 					addPrivKey()
-					server.AddHardCert(certCachedTouch, "certCachedTouch")
+					if err := server.AddHardCert(certCachedTouch, "certCachedTouch"); err != nil {
+						t.Error(err)
+					}
 				}
 			}()
 
@@ -560,7 +555,9 @@ func TestListWithKeyIDv1(t *testing.T) {
 				// Create Never Touch cert with CriticalOptions.
 				if tt.TouchlessCriticalOptions {
 					addPrivKey()
-					server.AddHardCert(certTouchlessWithCriticalOptions, "certTouchlessWithCriticalOptions")
+					if err := server.AddHardCert(certTouchlessWithCriticalOptions, "certTouchlessWithCriticalOptions"); err != nil {
+						t.Error(err)
+					}
 				}
 			}()
 
@@ -572,7 +569,9 @@ func TestListWithKeyIDv1(t *testing.T) {
 				// Create Cached Touch cert with CriticalOptions.
 				if tt.CachedTouchCriticalOptions {
 					addPrivKey()
-					server.AddHardCert(certCachedTouchWithCriticalOptions, "certCachedTouchWithCriticalOptions")
+					if err := server.AddHardCert(certCachedTouchWithCriticalOptions, "certCachedTouchWithCriticalOptions"); err != nil {
+						t.Error(err)
+					}
 				}
 			}()
 
@@ -583,7 +582,9 @@ func TestListWithKeyIDv1(t *testing.T) {
 
 				// Create Never Touch in-agent cert with CriticalOptions.
 				if tt.TouchlessInAgentCriticalOptions {
-					server.Add(ag.AddedKey{PrivateKey: priv, Certificate: certTouchlessInAgentWithCriticalOptions, Comment: "certTouchlessInAgentWithCriticalOptions"})
+					if err := server.Add(ag.AddedKey{PrivateKey: priv, Certificate: certTouchlessInAgentWithCriticalOptions, Comment: "certTouchlessInAgentWithCriticalOptions"}); err != nil {
+						t.Error(err)
+					}
 				}
 			}()
 			wg.Wait()
@@ -831,7 +832,9 @@ func TestSignersWithKetIDv1(t *testing.T) {
 			var once sync.Once
 			addPrivKey := func() {
 				once.Do(func() {
-					server.Add(ag.AddedKey{PrivateKey: priv, Comment: "InAgentKey"})
+					if err := server.Add(ag.AddedKey{PrivateKey: priv, Comment: "InAgentKey"}); err != nil {
+						t.Fatal(err)
+					}
 				})
 			}
 
@@ -853,7 +856,9 @@ func TestSignersWithKetIDv1(t *testing.T) {
 				// Create Always Touch cert.
 				if tt.AlwaysTouch {
 					addPrivKey()
-					server.AddHardCert(certAlwaysTouch, "certAlwaysTouch")
+					if err := server.AddHardCert(certAlwaysTouch, "certAlwaysTouch"); err != nil {
+						t.Error(err)
+					}
 				}
 			}()
 
@@ -865,7 +870,9 @@ func TestSignersWithKetIDv1(t *testing.T) {
 				// Create Always Touch cert with CriticalOptions.
 				if tt.AlwaysTouchCriticalOptions {
 					addPrivKey()
-					server.AddHardCert(certAlwaysTouchWithCriticalOptions, "certAlwaysTouchWithCriticalOptions")
+					if err := server.AddHardCert(certAlwaysTouchWithCriticalOptions, "certAlwaysTouchWithCriticalOptions"); err != nil {
+						t.Error(err)
+					}
 				}
 			}()
 
@@ -877,7 +884,9 @@ func TestSignersWithKetIDv1(t *testing.T) {
 				// Create Never Touch cert.
 				if tt.Touchless {
 					addPrivKey()
-					server.AddHardCert(certTouchless, "certTouchless")
+					if err := server.AddHardCert(certTouchless, "certTouchless"); err != nil {
+						t.Error(err)
+					}
 				}
 			}()
 
@@ -889,12 +898,16 @@ func TestSignersWithKetIDv1(t *testing.T) {
 				// Create Always Touch cert with CriticalOptions.
 				if tt.AlwaysTouchCriticalOptions {
 					addPrivKey()
-					server.AddHardCert(certAlwaysTouchWithCriticalOptions, "certAlwaysTouchWithCriticalOptions")
+					if err := server.AddHardCert(certAlwaysTouchWithCriticalOptions, "certAlwaysTouchWithCriticalOptions"); err != nil {
+						t.Error(err)
+					}
 				}
 			}()
 			// Create Never Touch in-agent cert.
 			if tt.TouchlessInAgent {
-				server.Add(ag.AddedKey{PrivateKey: priv, Certificate: certTouchlessInAgent, Comment: "certTouchlessInAgent"})
+				if err := server.Add(ag.AddedKey{PrivateKey: priv, Certificate: certTouchlessInAgent, Comment: "certTouchlessInAgent"}); err != nil {
+					t.Fatal(err)
+				}
 			}
 
 			wg.Add(1)
@@ -905,7 +918,9 @@ func TestSignersWithKetIDv1(t *testing.T) {
 				// Create Cached Touch cert.
 				if tt.CachedTouch {
 					addPrivKey()
-					server.AddHardCert(certCachedTouch, "certCachedTouch")
+					if err := server.AddHardCert(certCachedTouch, "certCachedTouch"); err != nil {
+						t.Error(err)
+					}
 				}
 			}()
 
@@ -917,7 +932,9 @@ func TestSignersWithKetIDv1(t *testing.T) {
 				// Create Never Touch cert with CriticalOptions.
 				if tt.TouchlessCriticalOptions {
 					addPrivKey()
-					server.AddHardCert(certTouchlessWithCriticalOptions, "certTouchlessWithCriticalOptions")
+					if err := server.AddHardCert(certTouchlessWithCriticalOptions, "certTouchlessWithCriticalOptions"); err != nil {
+						t.Error(err)
+					}
 				}
 			}()
 
@@ -929,7 +946,9 @@ func TestSignersWithKetIDv1(t *testing.T) {
 				// Create Cached Touch cert with CriticalOptions.
 				if tt.CachedTouchCriticalOptions {
 					addPrivKey()
-					server.AddHardCert(certCachedTouchWithCriticalOptions, "certCachedTouchWithCriticalOptions")
+					if err := server.AddHardCert(certCachedTouchWithCriticalOptions, "certCachedTouchWithCriticalOptions"); err != nil {
+						t.Error(err)
+					}
 				}
 			}()
 
@@ -940,7 +959,9 @@ func TestSignersWithKetIDv1(t *testing.T) {
 
 				// Create Never Touch in-agent cert with CriticalOptions.
 				if tt.TouchlessInAgentCriticalOptions {
-					server.Add(ag.AddedKey{PrivateKey: priv, Certificate: certTouchlessInAgentWithCriticalOptions, Comment: "certTouchlessInAgentWithCriticalOptions"})
+					if err := server.Add(ag.AddedKey{PrivateKey: priv, Certificate: certTouchlessInAgentWithCriticalOptions, Comment: "certTouchlessInAgentWithCriticalOptions"}); err != nil {
+						t.Error(err)
+					}
 				}
 			}()
 			wg.Wait()

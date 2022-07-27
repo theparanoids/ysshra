@@ -1,0 +1,4 @@
+issues:
+  exclude:
+    # We still support dsa algorithm in yubiagent.
+    - "SA1019: \"crypto/dsa\" has been deprecated since Go 1.16 because it shouldn't be used"

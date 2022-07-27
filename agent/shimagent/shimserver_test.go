@@ -605,8 +605,7 @@ func TestListWithKeyIDv1(t *testing.T) {
 }
 
 func TestSignersWithKetIDv1(t *testing.T) {
-	t.Parallel()
-
+	// Do not run in parallel to avoid race cond.
 	now := time.Now()
 
 	priv, keyInAgent, err := createPublicKey()

@@ -33,10 +33,7 @@ func testServer(t *testing.T, noUpstream bool) ShimAgent {
 		if err != nil {
 			return
 		}
-		err = ag.ServeAgent(keyring, conn)
-		if err != nil {
-			t.Error(err)
-		}
+		_ = ag.ServeAgent(keyring, conn)
 	}()
 	s, err := New(Option{
 		Address:    listener.Addr().String(),

@@ -35,7 +35,7 @@ func testServer(t *testing.T, noUpstream bool) ShimAgent {
 		}
 		err = ag.ServeAgent(keyring, conn)
 		if err != nil {
-			t.Fatal(err)
+			t.Error(err)
 		}
 	}()
 	s, err := New(Option{

@@ -23,6 +23,7 @@ import (
 	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/status"
 	"google.golang.org/grpc/test/bufconn"
 )
@@ -87,7 +88,7 @@ func testMockGRPCServer(t *testing.T) (*proto.MockSigningServer, []grpc.DialOpti
 
 	dialOpts := []grpc.DialOption{
 		grpc.WithContextDialer(dialer),
-		grpc.WithInsecure(),
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	}
 	return mockServer, dialOpts
 }

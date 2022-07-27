@@ -193,10 +193,9 @@ func (s *Server) remove(key ssh.PublicKey) error {
 	}
 
 	if s.noUpstreamSSHCACert {
-		if _, ok := s.upstreamSSHCACertCache[h]; ok {
-			// Remove the cert in the cache.
-			delete(s.upstreamSSHCACertCache, h)
-		}
+		// Remove the cert in the cache.
+		// No need to check whether the hash in the map before delete().
+		delete(s.upstreamSSHCACertCache, h)
 	}
 
 	return nil

@@ -1,0 +1,4 @@
+issues:
+  exclude:
+    # We still support dsa algorithm in yubiagent.
+    - "DSA is a legacy algorithm"

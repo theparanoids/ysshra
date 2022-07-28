@@ -48,7 +48,9 @@ func TestChallengeSSHAgent(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		a.Add(ag.AddedKey{PrivateKey: private})
+		if err := a.Add(ag.AddedKey{PrivateKey: private}); err != nil {
+			t.Fatal(err)
+		}
 	}
 
 	keys, err := a.List()

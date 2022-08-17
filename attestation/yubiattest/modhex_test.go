@@ -8,14 +8,14 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
-	"io/ioutil"
+	"os"
 	"testing"
 )
 
 // getCertificateFromFile is a helper function which parses PEM encoded
 // certificate from file and returns x509.Certificate for unit testing.
 func getCertificateFromFile(path string) (*x509.Certificate, error) {
-	data, err := ioutil.ReadFile(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, errors.New("failed to read file")
 	}

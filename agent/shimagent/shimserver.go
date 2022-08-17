@@ -63,10 +63,10 @@ func hash(data []byte) hashcode {
 // Server is the shim agent service.
 // It aims to "shim" the underlying ssh auth-agent with additional in-memory certificates.
 // It provides some extra functionalities.
-// 1. Automatically remove orphan certificates in memory.
-// 2. Automatically remove expired certificates in memory and in the underlying agent.
-// 3. Provide an option to not list upstream YSSHCA certificates. Note that it is still capable of
-//    removing the certificates.
+//  1. Automatically remove orphan certificates in memory.
+//  2. Automatically remove expired certificates in memory and in the underlying agent.
+//  3. Provide an option to not list upstream YSSHCA certificates. Note that it is still capable of
+//     removing the certificates.
 type Server struct {
 	// mu protects the server's status and the connection with the underlying agent.
 	mu sync.RWMutex

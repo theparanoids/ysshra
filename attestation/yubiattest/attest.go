@@ -6,7 +6,7 @@ package yubiattest
 import (
 	"crypto/x509"
 	"fmt"
-	"io/ioutil"
+	"os"
 )
 
 const (
@@ -22,11 +22,11 @@ type Attestor struct {
 // NewAttestor returns a new Attestor struct.
 func NewAttestor(pivRootCAPath string, u2fRootCAPath string) (*Attestor, error) {
 	// Load Root certificates.
-	yubicoPIVCA, err := ioutil.ReadFile(pivRootCAPath)
+	yubicoPIVCA, err := os.ReadFile(pivRootCAPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read pivRootCAPath, %v", err)
 	}
-	yubicoU2FCA, err := ioutil.ReadFile(u2fRootCAPath)
+	yubicoU2FCA, err := os.ReadFile(u2fRootCAPath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read u2fRootCAPath, %v", err)
 	}

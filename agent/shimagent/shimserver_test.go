@@ -7,12 +7,13 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
-	"github.com/theparanoids/ysshra/sshutils/key"
 	"math/big"
 	"sort"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/theparanoids/ysshra/sshutils/key"
 
 	"github.com/google/go-cmp/cmp"
 	"golang.org/x/crypto/ssh"

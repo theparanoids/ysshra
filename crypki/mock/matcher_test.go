@@ -4,8 +4,9 @@
 package mock
 
 import (
-	"github.com/theparanoids/crypki/proto"
 	"testing"
+
+	"github.com/theparanoids/crypki/proto"
 )
 
 func Test_strMatcher_Matches(t *testing.T) {

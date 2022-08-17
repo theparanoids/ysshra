@@ -4,8 +4,9 @@
 package shimagent
 
 import (
-	"go.uber.org/multierr"
 	"time"
+
+	"go.uber.org/multierr"
 
 	certutil "github.com/theparanoids/ysshra/sshutils/cert"
 	keyutil "github.com/theparanoids/ysshra/sshutils/key"

@@ -275,8 +275,9 @@ var (
 // This function will fill a NULL parameter to the certificate, thus will work
 // well with Go 1.8 which enforcing RFC 3279 2.3.1 standard.
 // More details can be found in
-//     RFC 3279 2.3.1 RSA Keys: https://tools.ietf.org/html/rfc3279#section-2.3.1
-//     Related Go commit: https://github.com/golang/go/commit/59aeac20c0412442848982a9287b4bab66c25682
+//
+//	RFC 3279 2.3.1 RSA Keys: https://tools.ietf.org/html/rfc3279#section-2.3.1
+//	Related Go commit: https://github.com/golang/go/commit/59aeac20c0412442848982a9287b4bab66c25682
 func ParseCertificate(asn1Data []byte) (*x509.Certificate, error) {
 	var cert certificate
 	rest, err := asn1.Unmarshal(asn1Data, &cert)

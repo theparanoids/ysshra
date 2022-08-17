@@ -6,7 +6,7 @@ package key
 import (
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"golang.org/x/crypto/ssh"
@@ -20,7 +20,7 @@ func GetPrivateKeyFromFile(file string) (interface{}, error) {
 	if err := validateKeyFile(file); err != nil {
 		return nil, err
 	}
-	buffer, err := ioutil.ReadFile(file)
+	buffer, err := os.ReadFile(file)
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +68,7 @@ func GetPublicKeysFromFile(file string) (keys []ssh.PublicKey, comments []string
 	if err := validateKeyFile(file); err != nil {
 		return nil, nil, err
 	}
-	data, err := ioutil.ReadFile(file)
+	data, err := os.ReadFile(file)
 	if err != nil {
 		return nil, nil, err
 	}

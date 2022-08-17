@@ -6,7 +6,7 @@ package regular
 import (
 	"crypto/rand"
 	"crypto/rsa"
-	"io/ioutil"
+	"os"
 	"path"
 	"testing"
 
@@ -52,7 +52,7 @@ func writePubKeyFile(t *testing.T, logName string, pubBytes []byte) string {
 	t.Helper()
 
 	tmpDir := t.TempDir()
-	if err := ioutil.WriteFile(path.Join(tmpDir, logName), pubBytes, 0400); err != nil {
+	if err := os.WriteFile(path.Join(tmpDir, logName), pubBytes, 0400); err != nil {
 		t.Fatal(err)
 	}
 	return tmpDir

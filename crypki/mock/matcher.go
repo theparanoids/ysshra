@@ -5,6 +5,7 @@ package mock
 
 import (
 	"fmt"
+
 	"github.com/golang/mock/gomock"
 )
 

@@ -7,6 +7,7 @@ package yubiagent
 import (
 	"bytes"
 	"crypto/rand"
+	"crypto/rsa"
 	"errors"
 	"sync"
 	"testing"
@@ -18,7 +19,20 @@ import (
 	"golang.org/x/net/nettest"
 )
 
-// testServer creates a yubiagent server for unit tests
+// createPublicKey create public and privaty key pairs for unit tests.
+func createPublicKey() (*rsa.PrivateKey, ssh.PublicKey, error) {
+	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		return nil, nil, err
+	}
+	pub, err := ssh.NewPublicKey(priv.Public())
+	if err != nil {
+		return nil, nil, err
+	}
+	return priv, pub, nil
+}
+
+// testServer creates a yubiagent server for unit tests.
 func testServer(t *testing.T) YubiAgent {
 	ag := agent.NewKeyring()
 

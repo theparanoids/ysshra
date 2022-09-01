@@ -54,44 +54,6 @@ type agentAttestSlotResp struct {
 	Err  string
 }
 
-type agentLifetimeConstraint struct {
-	LifetimeSecs uint32 `sshtype:"1"`
-}
-
-// Following messages define the operations to add/remove smartcard keys to/from the ssh agent.
-const (
-	// AgentMessageAddSmartcardKey is the SSH agent protocol numbers described in https://datatracker.ietf.org/doc/html/draft-miller-ssh-agent-01#rfc.section.7.1.
-	// We use AgentMessageAddSmartcardKeyConstrained instead to add key lifetime constrains.
-	AgentMessageAddSmartcardKey = 20
-	// AgentMessageRemoveSmartcardKey is the SSH agent protocol numbers described in https://datatracker.ietf.org/doc/html/draft-miller-ssh-agent-01#rfc.section.7.1.
-	AgentMessageRemoveSmartcardKey = 21
-	// AgentMessageAddSmartcardKeyConstrained is the SSH agent protocol numbers described in https://datatracker.ietf.org/doc/html/draft-miller-ssh-agent-01#rfc.section.7.1.
-	AgentMessageAddSmartcardKeyConstrained = 26
-
-	// agentConstrainConfirm is the protocol number (sshtype) to identify whether the agent require explicit user confirmation for private key operation when using the key.
-	// Ref: https://datatracker.ietf.org/doc/html/draft-miller-ssh-agent-01#section-4.2.6.2
-	agentConstrainConfirm = 2
-
-	// agentFailure and agentSuccess is the response protocol number indicating whether the add-key operation is success or not.
-	agentFailure = 5
-	agentSuccess = 6
-)
-
-// agentAddSmartcardKeyReq defines the request to add a smartcard key.
-// sshtype `26` is AgentMessageAddSmartcardKeyConstrained.
-type agentAddSmartcardKeyReq struct {
-	ID          string `sshtype:"26"`
-	PIN         []byte
-	Constraints []byte `ssh:"rest"`
-}
-
-// agentAddSmartcardKeyReq defines the request to remove a smartcard key.
-// sshtype `21` is AgentMessageRemoveSmartcardKey.
-type agentRemoveSmartcardKeyReq struct {
-	ID  string `sshtype:"21"`
-	PIN []byte
-}
-
 // A request with any following ssh agent protocol numbers require a forwarder (see: struct forwarder)
 // to forward net.Conn from YSSHRA, yubiagent to SSH agent.
 // See [PROTOCOL.agent], section 3: https://datatracker.ietf.org/doc/html/draft-miller-ssh-agent-00

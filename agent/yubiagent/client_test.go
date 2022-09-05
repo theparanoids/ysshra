@@ -35,19 +35,6 @@ func setConn(agent YubiAgent, conn net.Conn) reset {
 	return nil
 }
 
-// createPublicKey create public and privaty key pairs for unit test
-func createPublicKey() (*rsa.PrivateKey, ssh.PublicKey, error) {
-	priv, err := rsa.GenerateKey(rand.Reader, 2048)
-	if err != nil {
-		return nil, nil, err
-	}
-	pub, err := ssh.NewPublicKey(priv.Public())
-	if err != nil {
-		return nil, nil, err
-	}
-	return priv, pub, nil
-}
-
 // createSelfSignCert create a one-hour selfsigned certificate for unit tests
 func createSelfSignCert(KeyID string) (*rsa.PrivateKey, *ssh.Certificate, error) {
 	priv, pub, err := createPublicKey()

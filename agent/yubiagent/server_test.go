@@ -32,7 +32,7 @@ func createPublicKey() (*rsa.PrivateKey, ssh.PublicKey, error) {
 	return priv, pub, nil
 }
 
-// testServer creates a yubiagent server for unit tests.
+// testServer creates a yubiagent server for unit tests
 func testServer(t *testing.T) YubiAgent {
 	ag := agent.NewKeyring()
 

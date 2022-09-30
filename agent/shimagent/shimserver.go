@@ -43,7 +43,7 @@ func (c *certificate) Marshal() []byte {
 // corresponding ssh-agent.
 type signer struct {
 	cert  *certificate
-	agent agent.Agent
+	agent agent.ExtendedAgent
 }
 
 // PublicKey returns the hardware certificate.
@@ -52,6 +52,18 @@ func (s signer) PublicKey() ssh.PublicKey { return s.cert }
 // Sign signs the data by the hardware certificate key.
 func (s signer) Sign(_ io.Reader, data []byte) (*ssh.Signature, error) {
 	return s.agent.Sign(s.cert.Key, data)
+}
+
+// Sign signs the data by the hardware certificate key with the specified algorithm.
+func (s signer) SignWithAlgorithm(_ io.Reader, data []byte, algorithm string) (*ssh.Signature, error) {
+	var flags agent.SignatureFlags
+	switch algorithm {
+	case ssh.KeyAlgoRSASHA256:
+		flags = agent.SignatureFlagRsaSha256
+	case ssh.KeyAlgoRSASHA512:
+		flags = agent.SignatureFlagRsaSha512
+	}
+	return s.agent.SignWithFlags(s.cert.Key, data, flags)
 }
 
 type hashcode [sha256.Size]byte
@@ -74,7 +86,7 @@ type Server struct {
 	// conn is the connection to the underlying ssh-agent.
 	conn io.ReadWriteCloser
 	// agent is the underlying ssh-agent created from Conn
-	agent agent.Agent
+	agent agent.ExtendedAgent
 	// certs stores the certificates with private key in hardware
 	certs map[hashcode]*certificate
 
@@ -386,6 +398,10 @@ func (s *Server) AddHardCert(key ssh.PublicKey, suffix string) error {
 }
 
 func (s *Server) Sign(key ssh.PublicKey, data []byte) (*ssh.Signature, error) {
+	return s.SignWithFlags(key, data, 0)
+}
+
+func (s *Server) SignWithFlags(key ssh.PublicKey, data []byte, flags agent.SignatureFlags) (*ssh.Signature, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -408,7 +424,7 @@ func (s *Server) Sign(key ssh.PublicKey, data []byte) (*ssh.Signature, error) {
 	if cert, err := keyutil.CastSSHPublicKeyToCertificate(key); err == nil {
 		keyHash := hash(cert.Marshal())
 		if _, ok := s.certs[keyHash]; ok {
-			return s.agent.Sign(cert.Key, data)
+			return s.agent.SignWithFlags(cert.Key, data, flags)
 		}
 		if _, err := keyid.Unmarshal(cert.KeyId); err == nil && s.noUpstreamSSHCACert {
 			// Only in-agent YSSHCA certs aren't available in no-upstream mode.
@@ -416,7 +432,7 @@ func (s *Server) Sign(key ssh.PublicKey, data []byte) (*ssh.Signature, error) {
 		}
 	}
 
-	return s.agent.Sign(key, data)
+	return s.agent.SignWithFlags(key, data, flags)
 }
 
 // Add adds the given key to the agent.
@@ -462,7 +478,7 @@ func (s *Server) RemoveAll() error {
 }
 
 // Lock locks the shim agent.
-// List, Sign, Add, Remove and operations of the agent will raise an errAgentLocked error.
+// List, Sign, SignWithFlags, Add, Remove and operations of the agent will raise an errAgentLocked error.
 func (s *Server) Lock(passphrase []byte) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -545,6 +561,11 @@ func (s *Server) Signers() ([]ssh.Signer, error) {
 	})
 
 	return signers, nil
+}
+
+// Extension processes a custom extension request.
+func (s *Server) Extension(extensionType string, contents []byte) ([]byte, error) {
+	return s.agent.Extension(extensionType, contents)
 }
 
 // maxAgentResponseBytes is the maximum agent reply size that is accepted.

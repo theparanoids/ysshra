@@ -11,7 +11,7 @@ import (
 // ShimAgent is an interface that extends the functionality
 // of the Agent interface in golang.org/x/crypto/ssh/agent.
 type ShimAgent interface {
-	agent.Agent
+	agent.ExtendedAgent
 
 	// Forward is prepared for unknown OpenSSH request,
 	// it will simply forward the request to the ssh-agent.

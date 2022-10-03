@@ -77,6 +77,21 @@ func (mr *MockShimAgentMockRecorder) Close() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockShimAgent)(nil).Close))
 }
 
+// Extension mocks base method.
+func (m *MockShimAgent) Extension(arg0 string, arg1 []byte) ([]byte, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Extension", arg0, arg1)
+	ret0, _ := ret[0].([]byte)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Extension indicates an expected call of Extension.
+func (mr *MockShimAgentMockRecorder) Extension(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Extension", reflect.TypeOf((*MockShimAgent)(nil).Extension), arg0, arg1)
+}
+
 // Forward mocks base method.
 func (m *MockShimAgent) Forward(arg0 []byte) ([]byte, error) {
 	m.ctrl.T.Helper()
@@ -162,6 +177,21 @@ func (m *MockShimAgent) Sign(arg0 ssh.PublicKey, arg1 []byte) (*ssh.Signature, e
 func (mr *MockShimAgentMockRecorder) Sign(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Sign", reflect.TypeOf((*MockShimAgent)(nil).Sign), arg0, arg1)
+}
+
+// SignWithFlags mocks base method.
+func (m *MockShimAgent) SignWithFlags(arg0 ssh.PublicKey, arg1 []byte, arg2 agent.SignatureFlags) (*ssh.Signature, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "SignWithFlags", arg0, arg1, arg2)
+	ret0, _ := ret[0].(*ssh.Signature)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// SignWithFlags indicates an expected call of SignWithFlags.
+func (mr *MockShimAgentMockRecorder) SignWithFlags(arg0, arg1, arg2 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SignWithFlags", reflect.TypeOf((*MockShimAgent)(nil).SignWithFlags), arg0, arg1, arg2)
 }
 
 // Signers mocks base method.

@@ -19,7 +19,7 @@ import (
 type client struct {
 	conn     net.Conn
 	connLock sync.Mutex
-	agent    agent.Agent
+	agent    agent.ExtendedAgent
 }
 
 // NewClient returns a new YubiAgent client object.
@@ -245,6 +245,18 @@ func (c *client) Sign(key ssh.PublicKey, data []byte) (*ssh.Signature, error) {
 	return c.agent.Sign(key, data)
 }
 
+// SignWithFlags signs like Sign, but allows for additional flags to be sent/received
+func (c *client) SignWithFlags(key ssh.PublicKey, data []byte, flags agent.SignatureFlags) (*ssh.Signature, error) {
+	c.connLock.Lock()
+	defer c.connLock.Unlock()
+
+	if key == nil {
+		return nil, errors.New("null key provided")
+	}
+
+	return c.agent.SignWithFlags(key, data, flags)
+}
+
 // Add adds the given key to the agent.
 func (c *client) Add(key agent.AddedKey) error {
 	c.connLock.Lock()
@@ -295,4 +307,12 @@ func (c *client) Signers() ([]ssh.Signer, error) {
 	defer c.connLock.Unlock()
 
 	return c.agent.Signers()
+}
+
+// Extension processes a custom extension request.
+func (c *client) Extension(extensionType string, contents []byte) ([]byte, error) {
+	c.connLock.Lock()
+	defer c.connLock.Unlock()
+
+	return c.agent.Extension(extensionType, contents)
 }

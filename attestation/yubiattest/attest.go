@@ -9,10 +9,6 @@ import (
 	"os"
 )
 
-const (
-	modHexMap = "cbdefghijklnrtuv"
-)
-
 // Attestor is the struct that performs attestation on a Yubikey.
 type Attestor struct {
 	// roots is a certificate pool, which should include YubicoPIVRootCA and YubicoU2FRootCA.

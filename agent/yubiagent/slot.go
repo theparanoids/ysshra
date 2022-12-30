@@ -8,23 +8,26 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"fmt"
-
 	"github.com/rs/zerolog/log"
+	"github.com/theparanoids/crypki/proto"
 	"github.com/theparanoids/ysshra/attestation/yubiattest"
 	"github.com/theparanoids/ysshra/keyid"
+	keyutil "github.com/theparanoids/ysshra/sshutils/key"
 	"golang.org/x/crypto/ssh"
 )
 
-type keySlot struct {
-	code   string            // The code of the key slot, e.g. "9a", "9e"
-	public ssh.PublicKey     // The public key stored in the key slot
-	attest *x509.Certificate // The attestation certificate of the key slot
-	policy keyid.TouchPolicy // The touch policy of the key slot
+type SlotAgent struct {
+	yubiAgent YubiAgent
+	code      string            // The code of the key slot, e.g. "9a", "9e"
+	public    ssh.PublicKey     // The public key stored in the key slot
+	attest    *x509.Certificate // The attestation certificate of the key slot
+	policy    keyid.TouchPolicy // The touch policy of the key slot
+	csrs      []*proto.SSHCertificateSigningRequest
 }
 
-// Slot returns the key slot in the given yubicoAgent.
-func Slot(yubicoAgent YubiAgent, code string) (*keySlot, error) {
-	attestationCert, err := yubicoAgent.AttestSlot(code)
+// NewSlotAgent returns the key slot agent.
+func NewSlotAgent(yubiAgent YubiAgent, code string) (*SlotAgent, error) {
+	attestationCert, err := yubiAgent.AttestSlot(code)
 	if err != nil {
 		return nil, err
 	}
@@ -40,37 +43,70 @@ func Slot(yubicoAgent YubiAgent, code string) (*keySlot, error) {
 		return nil, err
 	}
 	if validateSSHPublicKeyAlgo(publicKey) {
-		return nil, fmt.Errorf("unsupported certificate type in keySlot: %s", code)
+		return nil, fmt.Errorf("unsupported certificate type in the key slot: %s", code)
 	}
 
 	touchPolicy := getTouchPolicy(attestationCert)
 
-	return &keySlot{
-		code:   code,
-		public: publicKey,
-		attest: attestationCert,
-		policy: touchPolicy,
+	return &SlotAgent{
+		code:      code,
+		public:    publicKey,
+		attest:    attestationCert,
+		policy:    touchPolicy,
+		yubiAgent: yubiAgent,
 	}, nil
 }
 
-func (s *keySlot) PublicKey() ssh.PublicKey {
+func (s *SlotAgent) RegisterCSR(csr *proto.SSHCertificateSigningRequest) {
+	s.csrs = append(s.csrs, csr)
+}
+
+func (s *SlotAgent) RegisterCSRs(csrs []*proto.SSHCertificateSigningRequest) {
+	for _, csr := range csrs {
+		s.RegisterCSR(csr)
+	}
+}
+
+func (s *SlotAgent) CSRs() []*proto.SSHCertificateSigningRequest {
+	return s.csrs
+}
+
+func (s *SlotAgent) AddCertsToAgent(certs []ssh.PublicKey, comments []string) error {
+	for i, c := range certs {
+		cert, err := keyutil.CastSSHPublicKeyToCertificate(c)
+		if err != nil {
+			continue
+		}
+		err = s.yubiAgent.AddHardCert(cert, comments[i])
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *SlotAgent) PublicKey() ssh.PublicKey {
 	return s.public
 }
 
-func (s *keySlot) TouchPolicy() keyid.TouchPolicy {
+func (s *SlotAgent) TouchPolicy() keyid.TouchPolicy {
 	return s.policy
 }
 
-func (s *keySlot) Serial() (string, error) {
+func (s *SlotAgent) Serial() (string, error) {
 	return yubiattest.ModHex(s.attest)
 }
 
-func (s *keySlot) SlotCode() string {
+func (s *SlotAgent) SlotCode() string {
 	return s.code
 }
 
-func (s *keySlot) AttestCert() *x509.Certificate {
+func (s *SlotAgent) AttestCert() *x509.Certificate {
 	return s.attest
+}
+
+func (s *SlotAgent) Agent() YubiAgent {
+	return s.yubiAgent
 }
 
 // getTouchPolicy returns the touch policy coded in the given attestation certificate

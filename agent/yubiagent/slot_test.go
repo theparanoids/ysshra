@@ -105,13 +105,13 @@ func TestNewSlot(t *testing.T) {
 			yubicoAgent.EXPECT().AttestSlot(tt.args.code).
 				Return(tt.args.attestCert, tt.args.err).Times(1)
 
-			got, err := Slot(yubicoAgent, tt.args.code)
+			got, err := NewSlotAgent(yubicoAgent, tt.args.code)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("Slot() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("NewSlotAgent() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Slot() got = %v, want %v", got, tt.want)
+				t.Errorf("NewSlotAgent() got = %v, want %v", got, tt.want)
 			}
 		})
 	}

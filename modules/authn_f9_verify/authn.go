@@ -1,10 +1,12 @@
-package authn_yubikey_verify_f9
+package authn_f9_verify
 
 import (
 	"bytes"
 	"crypto/x509"
 	"encoding/pem"
+	"errors"
 	"fmt"
+	"golang.org/x/crypto/ssh/agent"
 	"os"
 	"path"
 	"strconv"
@@ -24,7 +26,12 @@ type authn struct {
 }
 
 // authenticate checks if f9 cert is modified or imported.
-func (a *authn) authenticate(ag yubiagent.YubiAgent, _ *csr.ReqParam) error {
+func (a *authn) authenticate(agent agent.Agent, _ *csr.ReqParam) error {
+	ag, ok := agent.(yubiagent.YubiAgent)
+	if !ok {
+		return errors.New("only yubiagent is supported in this module")
+	}
+
 	f9Cert, err := ag.ReadSlot("f9")
 	if err != nil {
 		return fmt.Errorf(`failed to read slot f9, %v`, err)

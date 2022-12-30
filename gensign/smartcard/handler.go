@@ -2,6 +2,7 @@ package smartcard
 
 import (
 	"fmt"
+	"github.com/theparanoids/ysshra/modules"
 	"net"
 
 	"github.com/theparanoids/ysshra/agent/yubiagent"
@@ -17,11 +18,17 @@ const (
 	HandlerName = "paranoids.smartcard"
 )
 
+type slotAuthModules []modules.SlotAuthModule
+
+type csrModules []modules.CSRModule
+
 // Handler implements gensign.Handler.
 type Handler struct {
-	agent          yubiagent.YubiAgent
-	authenticators []authenticator
-	conf           *conf
+	conf            *conf
+	agent           yubiagent.YubiAgent
+	authModules     []modules.AuthModule
+	slotAuthModules map[*yubiagent.SlotAgent]slotAuthModules
+	slotCSRModule   map[*yubiagent.SlotAgent]csrModules
 }
 
 // NewHandler creates an SSH agent the ssh connection,
@@ -59,10 +66,33 @@ func (h *Handler) Authenticate(param *csr.ReqParam) error {
 		return gensign.NewErrorWithMsg(gensign.HandlerAuthN, HandlerName, fmt.Sprintf("want namespace policy %s, but got %s", common.NoNamespace, param.NamespacePolicy))
 	}
 
-	for _, auth := range h.authenticators {
-		if err := auth.authenticate(h.agent, param); err != nil {
+	for _, authMod := range h.authModules {
+		if err := authMod.Authenticate(h.agent, param); err != nil {
 			return gensign.NewError(gensign.HandlerAuthN, HandlerName, err)
 		}
 	}
+
+	for keySlot, authModules := range h.slotAuthModules {
+		for _, authMod := range authModules {
+			if err := authMod.Authenticate(keySlot, param); err != nil {
+				return gensign.NewError(gensign.HandlerAuthN, HandlerName, err)
+			}
+		}
+	}
 	return nil
+}
+
+func (h *Handler) Generate(param *csr.ReqParam) ([]csr.AgentKey, error) {
+	var agentKeys []csr.AgentKey
+	for slot, csrMods := range h.slotCSRModule {
+		for _, csrMod := range csrMods {
+			csrs, err := csrMod.Generate(slot.Agent(), param)
+			if err != nil {
+				return nil, gensign.NewError(gensign.HandlerGenCSRErr, HandlerName, err)
+			}
+			slot.RegisterCSRs(csrs)
+		}
+		agentKeys = append(agentKeys, slot)
+	}
+	return agentKeys, nil
 }

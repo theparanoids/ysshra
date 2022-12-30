@@ -1,4 +1,4 @@
-package authn_yubikey_user_mapping
+package authn_slot_serial
 
 import (
 	"fmt"
@@ -16,7 +16,7 @@ type authn struct {
 }
 
 func (a *authn) authenticate(ag yubiagent.YubiAgent, param *csr.ReqParam) error {
-	keySlot, err := yubiagent.Slot(ag, a.slot)
+	keySlot, err := yubiagent.NewSlotAgent(ag, a.slot)
 	if err != nil {
 		return fmt.Errorf("failed to fetch key slot from the agent")
 	}

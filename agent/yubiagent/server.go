@@ -66,8 +66,8 @@ func (s *server) ListSlots() (slots []string, err error) {
 		return nil, err
 	}
 	for _, line := range strings.Split(string(output), "\n") {
-		// Expect to find a line like "Slot 9a:"
-		if len(line) >= 6 && line[:4] == "Slot" {
+		// Expect to find a line like "NewSlotAgent 9a:"
+		if len(line) >= 6 && line[:4] == "NewSlotAgent" {
 			slots = append(slots, line[5:7])
 		}
 	}

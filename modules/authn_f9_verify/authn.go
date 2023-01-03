@@ -4,35 +4,50 @@ import (
 	"bytes"
 	"crypto/x509"
 	"encoding/pem"
-	"errors"
 	"fmt"
-	"golang.org/x/crypto/ssh/agent"
 	"os"
 	"path"
 	"strconv"
 
 	"github.com/theparanoids/ysshra/agent/yubiagent"
 	"github.com/theparanoids/ysshra/attestation/yubiattest"
+	"github.com/theparanoids/ysshra/config"
 	"github.com/theparanoids/ysshra/csr"
+	"github.com/theparanoids/ysshra/modules"
+	"golang.org/x/crypto/ssh/agent"
 )
 
 const (
+	Name = "f9_verify"
+
 	modHexMap = "cbdefghijklnrtuv"
 	hexMap    = "0123456789abcdef"
 )
 
 type authn struct {
 	f9CertsDir string
+	agent      yubiagent.YubiAgent
 }
 
-// authenticate checks if f9 cert is modified or imported.
-func (a *authn) authenticate(agent agent.Agent, _ *csr.ReqParam) error {
-	ag, ok := agent.(yubiagent.YubiAgent)
-	if !ok {
-		return errors.New("only yubiagent is supported in this module")
+func New(ag agent.Agent, c map[string]interface{}) (modules.AuthnModule, error) {
+	conf := &conf{}
+	if err := config.ExtractModuleConf(c, conf); err != nil {
+		return nil, fmt.Errorf("failed to initilaize module %q, %v", Name, err)
 	}
 
-	f9Cert, err := ag.ReadSlot("f9")
+	yubiAgent, ok := ag.(yubiagent.YubiAgent)
+	if !ok {
+		return nil, fmt.Errorf("yubiagent is the only supported agent in module %q", Name)
+	}
+	return &authn{
+		f9CertsDir: conf.F9CertsDir,
+		agent:      yubiAgent,
+	}, nil
+}
+
+// Authenticate checks if f9 cert is modified or imported.
+func (a *authn) Authenticate(_ *csr.ReqParam) error {
+	f9Cert, err := a.agent.ReadSlot("f9")
 	if err != nil {
 		return fmt.Errorf(`failed to read slot f9, %v`, err)
 	}

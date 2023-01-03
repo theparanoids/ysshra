@@ -7,24 +7,49 @@ import (
 
 	"github.com/theparanoids/ysshra/agent/yubiagent"
 	"github.com/theparanoids/ysshra/attestation/yubiattest"
+	"github.com/theparanoids/ysshra/config"
 	"github.com/theparanoids/ysshra/csr"
+	"github.com/theparanoids/ysshra/modules"
+	"golang.org/x/crypto/ssh/agent"
+)
+
+const (
+	Name = "slot_serial"
 )
 
 type authn struct {
-	slot            string
+	slotAgent       *yubiagent.SlotAgent
 	yubikeyMappings string
 }
 
-func (a *authn) authenticate(ag yubiagent.YubiAgent, param *csr.ReqParam) error {
-	keySlot, err := yubiagent.NewSlotAgent(ag, a.slot)
-	if err != nil {
-		return fmt.Errorf("failed to fetch key slot from the agent")
+func New(ag agent.Agent, c map[string]interface{}) (modules.AuthnModule, error) {
+	conf := &conf{}
+	if err := config.ExtractModuleConf(c, conf); err != nil {
+		return nil, fmt.Errorf("failed to initilaize module %q, %v", Name, err)
 	}
 
-	// Look up the yubikey serial number from the attestation cert.
-	serial, err := yubiattest.ModHex(keySlot.AttestCert())
+	yubiAgent, ok := ag.(yubiagent.YubiAgent)
+	if !ok {
+		return nil, fmt.Errorf("yubiagent is the only supported agent in module %q", Name)
+	}
+
+	slotAgent, err := yubiagent.NewSlotAgent(yubiAgent, conf.Slot)
 	if err != nil {
-		return fmt.Errorf(`failed to lookup the current yubiKey serial number in the attestation cert at slot %s, %v"`, a.slot, err)
+		return nil, fmt.Errorf("failed to access slot agent in module %q, %v", Name, err)
+	}
+
+	return &authn{
+		slotAgent:       slotAgent,
+		yubikeyMappings: conf.YubikeyMappings,
+	}, nil
+
+}
+
+func (a *authn) Authenticate(param *csr.ReqParam) error {
+	// Look up the yubikey serial number from the attestation cert.
+	serial, err := yubiattest.ModHex(a.slotAgent.AttestCert())
+	if err != nil {
+		return fmt.Errorf(`failed to lookup the current yubiKey serial number in the attestation cert at slot %s, %v"`, a.slotAgent.SlotCode(), err)
 	}
 
 	user, err := findUserFromYubikeyMapping(serial, a.yubikeyMappings)

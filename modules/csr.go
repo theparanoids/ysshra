@@ -1,11 +1,18 @@
 package modules
 
 import (
-	"github.com/theparanoids/crypki/proto"
+	"crypto/x509"
+
 	"github.com/theparanoids/ysshra/csr"
-	"golang.org/x/crypto/ssh/agent"
 )
 
 type CSRModule interface {
-	Generate(agent.Agent, *csr.ReqParam) ([]*proto.SSHCertificateSigningRequest, error)
+	Generate(*csr.ReqParam) ([]csr.AgentKey, error)
+}
+
+type CSROption struct {
+	// KeyIdentifiers is the mapping from CA public key algorithm to the key identifier configured in signer.
+	KeyIdentifiers map[x509.PublicKeyAlgorithm]string
+	// KeyIDVersion specifies the version of KeyID.
+	KeyIDVersion uint16 `json:"keyid_version"`
 }

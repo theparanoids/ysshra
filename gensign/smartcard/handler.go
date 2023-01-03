@@ -2,7 +2,6 @@ package smartcard
 
 import (
 	"fmt"
-	"github.com/theparanoids/ysshra/modules"
 	"net"
 
 	"github.com/theparanoids/ysshra/agent/yubiagent"
@@ -10,6 +9,7 @@ import (
 	"github.com/theparanoids/ysshra/config"
 	"github.com/theparanoids/ysshra/csr"
 	"github.com/theparanoids/ysshra/gensign"
+	"github.com/theparanoids/ysshra/modules"
 )
 
 const (
@@ -18,17 +18,12 @@ const (
 	HandlerName = "paranoids.smartcard"
 )
 
-type slotAuthModules []modules.SlotAuthModule
-
-type csrModules []modules.CSRModule
-
 // Handler implements gensign.Handler.
 type Handler struct {
-	conf            *conf
-	agent           yubiagent.YubiAgent
-	authModules     []modules.AuthModule
-	slotAuthModules map[*yubiagent.SlotAgent]slotAuthModules
-	slotCSRModule   map[*yubiagent.SlotAgent]csrModules
+	conf        *conf
+	agent       yubiagent.YubiAgent
+	authModules []modules.AuthnModule
+	csrModules  []modules.CSRModule
 }
 
 // NewHandler creates an SSH agent the ssh connection,
@@ -44,9 +39,24 @@ func NewHandler(gensignConf *config.GensignConfig, conn net.Conn) (gensign.Handl
 		return nil, fmt.Errorf("failed to initiialize handler %q, err: %v", HandlerName, err)
 	}
 
+	authnModules, err := gensign.LoadAuthnModules(agent, c.AuthnModules)
+	if err != nil {
+		return nil, fmt.Errorf("failed to initiialize authentication modules in hander %q, err: %v", HandlerName, err)
+	}
+
+	csrModules, err := gensign.LoadCSRModules(agent, c.CSRModules, &modules.CSROption{
+		KeyIdentifiers: c.KeyIdentifiers,
+		KeyIDVersion:   gensignConf.KeyIDVersion,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to initiialize csr modules in handler %q, err: %v", HandlerName, err)
+	}
+
 	return &Handler{
-		agent: agent,
-		conf:  c,
+		agent:       agent,
+		authModules: authnModules,
+		csrModules:  csrModules,
+		conf:        c,
 	}, nil
 }
 
@@ -67,16 +77,8 @@ func (h *Handler) Authenticate(param *csr.ReqParam) error {
 	}
 
 	for _, authMod := range h.authModules {
-		if err := authMod.Authenticate(h.agent, param); err != nil {
+		if err := authMod.Authenticate(param); err != nil {
 			return gensign.NewError(gensign.HandlerAuthN, HandlerName, err)
-		}
-	}
-
-	for keySlot, authModules := range h.slotAuthModules {
-		for _, authMod := range authModules {
-			if err := authMod.Authenticate(keySlot, param); err != nil {
-				return gensign.NewError(gensign.HandlerAuthN, HandlerName, err)
-			}
 		}
 	}
 	return nil
@@ -84,15 +86,12 @@ func (h *Handler) Authenticate(param *csr.ReqParam) error {
 
 func (h *Handler) Generate(param *csr.ReqParam) ([]csr.AgentKey, error) {
 	var agentKeys []csr.AgentKey
-	for slot, csrMods := range h.slotCSRModule {
-		for _, csrMod := range csrMods {
-			csrs, err := csrMod.Generate(slot.Agent(), param)
-			if err != nil {
-				return nil, gensign.NewError(gensign.HandlerGenCSRErr, HandlerName, err)
-			}
-			slot.RegisterCSRs(csrs)
+	for _, csrMod := range h.csrModules {
+		csrWrappers, err := csrMod.Generate(param)
+		if err != nil {
+			return nil, gensign.NewError(gensign.HandlerGenCSRErr, HandlerName, err)
 		}
-		agentKeys = append(agentKeys, slot)
+		agentKeys = append(agentKeys, csrWrappers...)
 	}
 	return agentKeys, nil
 }

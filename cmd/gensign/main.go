@@ -5,6 +5,7 @@ package main
 
 import (
 	"context"
+	"github.com/theparanoids/ysshra/gensign/smartcard"
 	"io"
 	"os"
 
@@ -26,7 +27,8 @@ const (
 )
 
 var handlerCreators = map[string]gensign.CreateHandler{
-	regular.HandlerName: regular.NewHandler,
+	regular.HandlerName:   regular.NewHandler,
+	smartcard.HandlerName: smartcard.NewHandler,
 }
 
 func main() {

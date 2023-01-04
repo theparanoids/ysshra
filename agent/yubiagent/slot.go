@@ -59,6 +59,18 @@ func NewSlotAgent(yubiAgent YubiAgent, code string) (*SlotAgent, error) {
 	}, nil
 }
 
+// NewSlotAgentWithVals returns a new slot agent with values.
+func NewSlotAgentWithVals(yubiAgent YubiAgent, code string, public ssh.PublicKey,
+	attest *x509.Certificate, policy keyid.TouchPolicy) *SlotAgent {
+	return &SlotAgent{
+		yubiAgent: yubiAgent,
+		code:      code,
+		public:    public,
+		attest:    attest,
+		policy:    policy,
+	}
+}
+
 // RegisterCSR registers the given certificate signing request for the key slot.
 func (s *SlotAgent) RegisterCSR(csr *proto.SSHCertificateSigningRequest) {
 	s.csrs = append(s.csrs, csr)

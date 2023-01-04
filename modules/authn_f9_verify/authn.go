@@ -18,6 +18,7 @@ import (
 )
 
 const (
+	// Name is a unique name to identify a module.
 	Name = "f9_verify"
 
 	modHexMap = "cbdefghijklnrtuv"
@@ -29,6 +30,7 @@ type authn struct {
 	agent      yubiagent.YubiAgent
 }
 
+// New returns an authentication module.
 func New(ag agent.Agent, c map[string]interface{}) (modules.AuthnModule, error) {
 	conf := &conf{}
 	if err := config.ExtractModuleConf(c, conf); err != nil {
@@ -85,7 +87,7 @@ func VerifyF9Cert(f9CertDirPath string, f9Cert *x509.Certificate) error {
 		f9SerialNumStr = prefix + f9SerialNumStr
 	}
 
-	// get the attestation cert provided by yubico in the configured path
+	// Get the attestation cert provided by yubico in the configured path.
 	certPath := path.Join(f9CertDirPath, f9SerialNumStr+suffix)
 	certBytes, err := os.ReadFile(certPath)
 	if err != nil {

@@ -3,18 +3,21 @@ package yubiagent
 import (
 	"crypto"
 	"crypto/ecdsa"
+	"crypto/elliptic"
+	"crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/asn1"
 	"errors"
+	"reflect"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/theparanoids/crypki/proto"
 	"github.com/theparanoids/ysshra/attestation/yubiattest"
 	"github.com/theparanoids/ysshra/keyid"
 	"golang.org/x/crypto/ssh"
-	"reflect"
-	"testing"
 )
 
 func TestNewSlotAgent(t *testing.T) {
@@ -118,6 +121,16 @@ func TestNewSlotAgent(t *testing.T) {
 func Test_validateSSHPublicKeyAlgo(t *testing.T) {
 	t.Parallel()
 
+	priv, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	privEC, err := ecdsa.GenerateKey(elliptic.P256(), rand.Reader)
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	tests := []struct {
 		name string
 		pub  crypto.PublicKey
@@ -125,11 +138,13 @@ func Test_validateSSHPublicKeyAlgo(t *testing.T) {
 	}{
 		{
 			name: "happy path rsa",
-			pub:  rsa.PublicKey{},
+			pub:  &priv.PublicKey,
+			want: true,
 		},
 		{
 			name: "happy path edcsa",
-			pub:  ecdsa.PublicKey{},
+			pub:  &privEC.PublicKey,
+			want: true,
 		},
 		{
 			name: "invalid",

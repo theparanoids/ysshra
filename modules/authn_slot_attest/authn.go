@@ -13,6 +13,7 @@ import (
 )
 
 const (
+	// Name is a unique name to identify a module.
 	Name = "slot_attest"
 )
 

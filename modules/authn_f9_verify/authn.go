@@ -36,7 +36,7 @@ type authn struct {
 // New returns an authentication module.
 func New(ag agent.Agent, c map[string]interface{}) (modules.AuthnModule, error) {
 	conf := &conf{}
-	if err := config.ExtractModuleConf(c, conf); err != nil {
+	if err := config.DecodeModuleConf(c, conf); err != nil {
 		return nil, fmt.Errorf("failed to initilaize module %q, %v", Name, err)
 	}
 
@@ -107,7 +107,7 @@ func VerifyF9Cert(f9CertDirPath string, f9Cert *x509.Certificate) error {
 }
 
 // getAttestationSerialNum gets the serial number of attestation cert in Decimal format.
-// FYI: https://developers.yubico.com/OTP/Modhex_Converter.html
+// Ref: https://developers.yubico.com/OTP/Modhex_Converter.html
 func getAttestationSerialNum(modHex []byte) (uint64, error) {
 	var hexString string
 	for _, val := range modHex {

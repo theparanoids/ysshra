@@ -6,12 +6,15 @@ package cert
 import "strings"
 
 const (
+	// LognamePlaceholder is the placeholder for logname in a template to generate placeholders.
 	LognamePlaceholder = "<logname>"
-	SplitChar          = ","
+	// SplitChar is the splitter char to split the principals in a template.
+	SplitChar = ","
 )
 
-func GetPrincipals(prinsConf string, logName string) []string {
-	prins := strings.ReplaceAll(prinsConf, LognamePlaceholder, logName)
+// GetPrincipals returns a slice of principals based on the given principals template and the SSH logname.
+func GetPrincipals(prinsTpl string, logname string) []string {
+	prins := strings.ReplaceAll(prinsTpl, LognamePlaceholder, logname)
 	principals := strings.Split(prins, SplitChar)
 	for i := range principals {
 		principals[i] = strings.TrimSpace(principals[i])

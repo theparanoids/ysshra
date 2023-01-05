@@ -32,7 +32,7 @@ type generator struct {
 // New returns a CSR generator module.
 func New(ag agent.Agent, c map[string]interface{}, opt *modules.CSROption) (modules.CSRModule, error) {
 	conf := &conf{}
-	if err := config.ExtractModuleConf(c, conf); err != nil {
+	if err := config.DecodeModuleConf(c, conf); err != nil {
 		return nil, fmt.Errorf("failed to initilaize module %q, %v", Name, err)
 	}
 
@@ -60,7 +60,7 @@ func (g *generator) Generate(param *csr.ReqParam) ([]csr.AgentKey, error) {
 		return nil, fmt.Errorf("unsupported CA public key algorithm %q", param.Attrs.CAPubKeyAlgo)
 	}
 
-	principals := cert.GetPrincipals(g.c.Principals, param.LogName)
+	principals := cert.GetPrincipals(g.c.PrincipalsTpl, param.LogName)
 
 	kid := &keyid.KeyID{
 		Principals:    principals,

@@ -13,18 +13,15 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/theparanoids/crypki/proto"
-	"github.com/theparanoids/ysshra/crypki"
-
-	"github.com/theparanoids/ysshra/message"
-
-	"golang.org/x/crypto/ssh"
-
 	"github.com/golang/mock/gomock"
+	"github.com/theparanoids/crypki/proto"
 	"github.com/theparanoids/ysshra/agent/yubiagent"
+	"github.com/theparanoids/ysshra/crypki"
 	"github.com/theparanoids/ysshra/csr"
 	"github.com/theparanoids/ysshra/keyid"
+	"github.com/theparanoids/ysshra/message"
 	"github.com/theparanoids/ysshra/modules"
+	"golang.org/x/crypto/ssh"
 	sshagent "golang.org/x/crypto/ssh/agent"
 )
 
@@ -54,7 +51,7 @@ func TestNew(t *testing.T) {
 				yubicoAgent.EXPECT().AttestSlot("9a").Return(happyPathAttestCert, nil).Times(1)
 				return yubicoAgent, map[string]interface{}{
 					"touch_policy":      1,
-					"principals":        "<log_name>",
+					"principalsTpl":     "<logname>",
 					"slot":              "9a",
 					"cert_validity_sec": 3600,
 				}
@@ -62,7 +59,7 @@ func TestNew(t *testing.T) {
 			want: &generator{
 				c: &conf{
 					TouchPolicy:     1,
-					Principals:      "<log_name>",
+					PrincipalsTpl:   "<logname>",
 					Slot:            "9a",
 					CertValiditySec: 3600,
 				},
@@ -89,7 +86,7 @@ func TestNew(t *testing.T) {
 				agent := sshagent.NewKeyring()
 				return agent, map[string]interface{}{
 					"touch_policy":      1,
-					"principals":        "<log_name>",
+					"principals":        "<logname>",
 					"slot":              "9a",
 					"cert_validity_sec": 3600,
 				}
@@ -105,7 +102,7 @@ func TestNew(t *testing.T) {
 				yubicoAgent.EXPECT().AttestSlot("9a").Return(nil, errors.New("invalid attestation")).Times(1)
 				return yubicoAgent, map[string]interface{}{
 					"touch_policy":      1,
-					"principals":        "<log_name>",
+					"principals":        "<logname>",
 					"slot":              "9a",
 					"cert_validity_sec": 3600,
 				}
@@ -162,7 +159,7 @@ func Test_generator_Generate(t *testing.T) {
 			c: &conf{
 				IsFirefighter:   true,
 				TouchPolicy:     1,
-				Principals:      "<logname>",
+				PrincipalsTpl:   "<logname>",
 				Slot:            "9a",
 				CertValiditySec: 86400,
 			},

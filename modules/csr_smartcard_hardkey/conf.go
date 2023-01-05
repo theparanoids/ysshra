@@ -8,5 +8,5 @@ type conf struct {
 	CertValiditySec uint64 `mapstructure:"cert_validity_sec" default:"43200"`
 	IsFirefighter   bool   `mapstructure:"is_firefighter"`
 	TouchPolicy     int    `mapstructure:"touch_policy"`
-	Principals      string `mapstructure:"principals"`
+	PrincipalsTpl   string `mapstructure:"principals_tpl"`
 }

@@ -29,7 +29,7 @@ type authn struct {
 // New returns an authentication module.
 func New(ag agent.Agent, c map[string]interface{}) (modules.AuthnModule, error) {
 	conf := &conf{}
-	if err := config.ExtractModuleConf(c, conf); err != nil {
+	if err := config.DecodeModuleConf(c, conf); err != nil {
 		return nil, fmt.Errorf("failed to initilaize module %q, %v", Name, err)
 	}
 

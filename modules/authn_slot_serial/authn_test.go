@@ -1,3 +1,6 @@
+// Copyright 2022 Yahoo Inc.
+// Licensed under the terms of the Apache License 2.0. Please see LICENSE file in project root for terms.
+
 package authn_slot_serial
 
 import (
@@ -213,7 +216,7 @@ func Test_authn_Authenticate(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				agent := yubiagent.NewSlotAgentWithVals(nil, "9a", nil, cert, 0)
+				agent := yubiagent.NewSlotAgentWithAttrs(nil, "9a", nil, cert, 0)
 				return agent
 			},
 			reqParam: &csr.ReqParam{
@@ -232,7 +235,7 @@ func Test_authn_Authenticate(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				agent := yubiagent.NewSlotAgentWithVals(nil, "9a", nil, cert, 0)
+				agent := yubiagent.NewSlotAgentWithAttrs(nil, "9a", nil, cert, 0)
 				return agent
 			},
 			reqParam: &csr.ReqParam{
@@ -252,7 +255,7 @@ func Test_authn_Authenticate(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				agent := yubiagent.NewSlotAgentWithVals(nil, "9a", nil, cert, 0)
+				agent := yubiagent.NewSlotAgentWithAttrs(nil, "9a", nil, cert, 0)
 				return agent
 			},
 			reqParam: &csr.ReqParam{
@@ -277,7 +280,7 @@ func Test_authn_Authenticate(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				agent := yubiagent.NewSlotAgentWithVals(nil, "9a", nil, cert, 0)
+				agent := yubiagent.NewSlotAgentWithAttrs(nil, "9a", nil, cert, 0)
 				return agent
 			},
 			reqParam: &csr.ReqParam{

@@ -1,3 +1,6 @@
+// Copyright 2022 Yahoo Inc.
+// Licensed under the terms of the Apache License 2.0. Please see LICENSE file in project root for terms.
+
 package yubiagent
 
 import (
@@ -59,8 +62,8 @@ func NewSlotAgent(yubiAgent YubiAgent, code string) (*SlotAgent, error) {
 	}, nil
 }
 
-// NewSlotAgentWithVals returns a new slot agent with values.
-func NewSlotAgentWithVals(yubiAgent YubiAgent, code string, public ssh.PublicKey,
+// NewSlotAgentWithAttrs returns a new slot agent with attribute values.
+func NewSlotAgentWithAttrs(yubiAgent YubiAgent, code string, public ssh.PublicKey,
 	attest *x509.Certificate, policy keyid.TouchPolicy) *SlotAgent {
 	return &SlotAgent{
 		yubiAgent: yubiAgent,

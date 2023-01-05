@@ -1,3 +1,6 @@
+// Copyright 2022 Yahoo Inc.
+// Licensed under the terms of the Apache License 2.0. Please see LICENSE file in project root for terms.
+
 package csr_smartcard_hardkey
 
 import (
@@ -16,6 +19,7 @@ import (
 )
 
 const (
+	// Name is a unique name to identify a CSR generator module.
 	Name = "smartcard_hardkey"
 )
 
@@ -25,6 +29,7 @@ type generator struct {
 	opt       *modules.CSROption
 }
 
+// New returns a CSR generator module.
 func New(ag agent.Agent, c map[string]interface{}, opt *modules.CSROption) (modules.CSRModule, error) {
 	conf := &conf{}
 	if err := config.ExtractModuleConf(c, conf); err != nil {
@@ -48,6 +53,7 @@ func New(ag agent.Agent, c map[string]interface{}, opt *modules.CSROption) (modu
 	}, nil
 }
 
+// Generate generates a slice of agent keys which include SSH certificate requests.
 func (g *generator) Generate(param *csr.ReqParam) ([]csr.AgentKey, error) {
 	keyIdentifier, ok := g.opt.KeyIdentifiers[param.Attrs.CAPubKeyAlgo]
 	if !ok {

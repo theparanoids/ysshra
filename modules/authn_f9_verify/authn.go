@@ -1,3 +1,6 @@
+// Copyright 2022 Yahoo Inc.
+// Licensed under the terms of the Apache License 2.0. Please see LICENSE file in project root for terms.
+
 package authn_f9_verify
 
 import (
@@ -18,7 +21,7 @@ import (
 )
 
 const (
-	// Name is a unique name to identify a module.
+	// Name is a unique name to identify an authentication module.
 	Name = "f9_verify"
 
 	modHexMap = "cbdefghijklnrtuv"

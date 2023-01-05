@@ -1,3 +1,6 @@
+// Copyright 2022 Yahoo Inc.
+// Licensed under the terms of the Apache License 2.0. Please see LICENSE file in project root for terms.
+
 package authn_slot_attest
 
 import (
@@ -13,7 +16,7 @@ import (
 )
 
 const (
-	// Name is a unique name to identify a module.
+	// Name is a unique name to identify an authentication module.
 	Name = "slot_attest"
 )
 
@@ -22,6 +25,7 @@ type authn struct {
 	conf      *conf
 }
 
+// New returns an authentication module.
 func New(ag agent.Agent, c map[string]interface{}) (modules.AuthnModule, error) {
 	conf := &conf{}
 	if err := config.ExtractModuleConf(c, conf); err != nil {
@@ -44,6 +48,7 @@ func New(ag agent.Agent, c map[string]interface{}) (modules.AuthnModule, error) 
 	}, nil
 }
 
+// Authenticate attests a key slot to verify the key pair of that slot is generated inside a smartcard.
 func (a *authn) Authenticate(_ *csr.ReqParam) error {
 	// Read the certificate in the yubikey f9 slot.
 	// F9 slot is only used for attestation of other keys generated on device with instruction f9.

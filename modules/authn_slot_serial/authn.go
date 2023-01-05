@@ -1,3 +1,6 @@
+// Copyright 2022 Yahoo Inc.
+// Licensed under the terms of the Apache License 2.0. Please see LICENSE file in project root for terms.
+
 package authn_slot_serial
 
 import (
@@ -14,6 +17,7 @@ import (
 )
 
 const (
+	// Name is a unique name to identify an authentication module.
 	Name = "slot_serial"
 )
 
@@ -22,6 +26,7 @@ type authn struct {
 	yubikeyMappings string
 }
 
+// New returns an authentication module.
 func New(ag agent.Agent, c map[string]interface{}) (modules.AuthnModule, error) {
 	conf := &conf{}
 	if err := config.ExtractModuleConf(c, conf); err != nil {
@@ -45,6 +50,8 @@ func New(ag agent.Agent, c map[string]interface{}) (modules.AuthnModule, error) 
 
 }
 
+// Authenticate extracts the yubikey serial number from a key slot, and looks up a yubikey mapping file to check whether
+// the belonger of that serial number matches to the certificate requester.
 func (a *authn) Authenticate(param *csr.ReqParam) error {
 	// Look up the yubikey serial number from the attestation cert.
 	serial, err := yubiattest.ModHex(a.slotAgent.AttestCert())

@@ -51,7 +51,7 @@ func TestNew(t *testing.T) {
 				yubicoAgent.EXPECT().AttestSlot("9a").Return(happyPathAttestCert, nil).Times(1)
 				return yubicoAgent, map[string]interface{}{
 					"touch_policy":      1,
-					"principalsTpl":     "<logname>",
+					"principals_tpl":    "<logname>",
 					"slot":              "9a",
 					"cert_validity_sec": 3600,
 				}

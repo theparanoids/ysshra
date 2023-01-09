@@ -10,7 +10,7 @@ import (
 
 	"github.com/theparanoids/ysshra/agent/yubiagent"
 	"github.com/theparanoids/ysshra/attestation/yubiattest"
-	"github.com/theparanoids/ysshra/config"
+	yconfig "github.com/theparanoids/ysshra/config"
 	"github.com/theparanoids/ysshra/csr"
 	"github.com/theparanoids/ysshra/modules"
 	"golang.org/x/crypto/ssh/agent"
@@ -22,14 +22,14 @@ const (
 )
 
 type authn struct {
-	slotAgent       *yubiagent.SlotAgent
+	slot            *yubiagent.Slot
 	yubikeyMappings string
 }
 
 // New returns an authentication module.
 func New(ag agent.Agent, c map[string]interface{}) (modules.AuthnModule, error) {
-	conf := &conf{}
-	if err := config.DecodeModuleConf(c, conf); err != nil {
+	conf := &config{}
+	if err := yconfig.DecodeModuleConfig(c, conf); err != nil {
 		return nil, fmt.Errorf("failed to initilaize module %q, %v", Name, err)
 	}
 
@@ -38,13 +38,13 @@ func New(ag agent.Agent, c map[string]interface{}) (modules.AuthnModule, error) 
 		return nil, fmt.Errorf("yubiagent is the only supported agent in module %q", Name)
 	}
 
-	slotAgent, err := yubiagent.NewSlotAgent(yubiAgent, conf.Slot)
+	slot, err := yubiagent.NewSlot(yubiAgent, conf.Slot)
 	if err != nil {
 		return nil, fmt.Errorf("failed to access slot agent in module %q, %v", Name, err)
 	}
 
 	return &authn{
-		slotAgent:       slotAgent,
+		slot:            slot,
 		yubikeyMappings: conf.YubikeyMappings,
 	}, nil
 
@@ -54,9 +54,9 @@ func New(ag agent.Agent, c map[string]interface{}) (modules.AuthnModule, error) 
 // the belonger of that serial number matches to the certificate requester.
 func (a *authn) Authenticate(param *csr.ReqParam) error {
 	// Look up the yubikey serial number from the attestation cert.
-	serial, err := yubiattest.ModHex(a.slotAgent.AttestCert())
+	serial, err := yubiattest.ModHex(a.slot.AttestCert())
 	if err != nil {
-		return fmt.Errorf(`failed to lookup the current yubiKey serial number in the attestation cert at slot %s, %v"`, a.slotAgent.SlotCode(), err)
+		return fmt.Errorf(`failed to lookup the current yubiKey serial number in the attestation cert at slot %s, %v"`, a.slot.SlotCode(), err)
 	}
 
 	user, err := findUserFromYubikeyMapping(serial, a.yubikeyMappings)

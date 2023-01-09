@@ -18,12 +18,13 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/theparanoids/crypki/proto"
+	"github.com/theparanoids/ysshra/agent/yubiagent/mock"
 	"github.com/theparanoids/ysshra/attestation/yubiattest"
 	"github.com/theparanoids/ysshra/keyid"
 	"golang.org/x/crypto/ssh"
 )
 
-func TestNewSlotAgent(t *testing.T) {
+func TestNewSlot(t *testing.T) {
 	t.Parallel()
 
 	happyPathAttestCert := &x509.Certificate{
@@ -42,14 +43,14 @@ func TestNewSlotAgent(t *testing.T) {
 		attestCert *x509.Certificate
 		attestErr  error
 		code       string
-		want       *SlotAgent
+		want       *Slot
 		wantErr    bool
 	}{
 		{
 			name:       "happy path",
 			code:       "9a",
 			attestCert: happyPathAttestCert,
-			want: &SlotAgent{
+			want: &Slot{
 				attest: happyPathAttestCert,
 				public: happyPathPublicKey,
 				code:   "9a",
@@ -99,7 +100,7 @@ func TestNewSlotAgent(t *testing.T) {
 			mockCtrl := gomock.NewController(t)
 			defer mockCtrl.Finish()
 
-			yubicoAgent := NewMockYubiAgent(mockCtrl)
+			yubicoAgent := mock.NewMockYubiAgent(mockCtrl)
 			yubicoAgent.EXPECT().AttestSlot(tt.code).
 				Return(tt.attestCert, tt.attestErr).Times(1)
 
@@ -109,7 +110,7 @@ func TestNewSlotAgent(t *testing.T) {
 				tt.want.yubiAgent = yubicoAgent
 			}
 
-			got, err := NewSlotAgent(yubicoAgent, tt.code)
+			got, err := NewSlot(yubicoAgent, tt.code)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("NewSlot() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -156,16 +157,16 @@ func Test_validateSSHPublicKeyAlgo(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := validateSSHPublicKeyAlgo(tt.pub); got != tt.want {
-				t.Errorf("validateSSHPublicKeyAlgo() = %v, want %v", got, tt.want)
+			if got := validateYubikeyCrytpoAlgorithm(tt.pub); got != tt.want {
+				t.Errorf("validateYubikeyCrytpoAlgorithm() = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestSlotAgent_RegisterCSRs(t *testing.T) {
+func TestSlot_RegisterCSRs(t *testing.T) {
 	t.Parallel()
-	s := &SlotAgent{}
+	s := &Slot{}
 	csrs := []*proto.SSHCertificateSigningRequest{
 		{
 			Principals: []string{"test01"},
@@ -182,15 +183,15 @@ func TestSlotAgent_RegisterCSRs(t *testing.T) {
 	}
 }
 
-func TestSlotAgentFields(t *testing.T) {
+func TestSlotFields(t *testing.T) {
 	t.Parallel()
 	mockCtrl := gomock.NewController(t)
 	defer mockCtrl.Finish()
 
 	happyPathPublicKey, _ := ssh.NewPublicKey(ecdsa.PublicKey{})
 
-	s := &SlotAgent{
-		yubiAgent: NewMockYubiAgent(mockCtrl),
+	s := &Slot{
+		yubiAgent: mock.NewMockYubiAgent(mockCtrl),
 		code:      "test-code",
 		public:    happyPathPublicKey,
 		attest: &x509.Certificate{

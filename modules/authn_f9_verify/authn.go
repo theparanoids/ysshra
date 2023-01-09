@@ -14,7 +14,7 @@ import (
 
 	"github.com/theparanoids/ysshra/agent/yubiagent"
 	"github.com/theparanoids/ysshra/attestation/yubiattest"
-	"github.com/theparanoids/ysshra/config"
+	yconfig "github.com/theparanoids/ysshra/config"
 	"github.com/theparanoids/ysshra/csr"
 	"github.com/theparanoids/ysshra/modules"
 	"golang.org/x/crypto/ssh/agent"
@@ -35,8 +35,8 @@ type authn struct {
 
 // New returns an authentication module.
 func New(ag agent.Agent, c map[string]interface{}) (modules.AuthnModule, error) {
-	conf := &conf{}
-	if err := config.DecodeModuleConf(c, conf); err != nil {
+	conf := &config{}
+	if err := yconfig.DecodeModuleConfig(c, conf); err != nil {
 		return nil, fmt.Errorf("failed to initilaize module %q, %v", Name, err)
 	}
 

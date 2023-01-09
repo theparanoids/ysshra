@@ -19,6 +19,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/theparanoids/ysshra/agent/yubiagent"
+	"github.com/theparanoids/ysshra/agent/yubiagent/mock"
 	"github.com/theparanoids/ysshra/csr"
 	"github.com/theparanoids/ysshra/keyid"
 )
@@ -106,7 +107,7 @@ func TestNew(t *testing.T) {
 			agent: func(t *testing.T) (yubiagent.YubiAgent, map[string]interface{}) {
 				mockCtrl := gomock.NewController(t)
 				t.Cleanup(mockCtrl.Finish)
-				yubicoAgent := yubiagent.NewMockYubiAgent(mockCtrl)
+				yubicoAgent := mock.NewMockYubiAgent(mockCtrl)
 
 				happyPathAttestCert := &x509.Certificate{
 					PublicKey: &rsa.PublicKey{},
@@ -134,7 +135,7 @@ func TestNew(t *testing.T) {
 			agent: func(t *testing.T) (yubiagent.YubiAgent, map[string]interface{}) {
 				mockCtrl := gomock.NewController(t)
 				t.Cleanup(mockCtrl.Finish)
-				yubicoAgent := yubiagent.NewMockYubiAgent(mockCtrl)
+				yubicoAgent := mock.NewMockYubiAgent(mockCtrl)
 
 				yubicoAgent.EXPECT().AttestSlot("9a").
 					Return(nil, errors.New("some agent error")).Times(1)
@@ -147,11 +148,11 @@ func TestNew(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name: "invalid conf",
+			name: "invalid config",
 			agent: func(t *testing.T) (yubiagent.YubiAgent, map[string]interface{}) {
 				mockCtrl := gomock.NewController(t)
 				t.Cleanup(mockCtrl.Finish)
-				yubicoAgent := yubiagent.NewMockYubiAgent(mockCtrl)
+				yubicoAgent := mock.NewMockYubiAgent(mockCtrl)
 
 				return yubicoAgent, map[string]interface{}{
 					"slot": 123,
@@ -184,7 +185,7 @@ func TestNew(t *testing.T) {
 			if !ok {
 				t.Errorf("the module is not the correct authn")
 			}
-			gotMod.slotAgent = nil // We don't need to check slot agent in this unit test.
+			gotMod.slot = nil // We don't need to check slot agent in this unit test.
 			if !reflect.DeepEqual(gotMod, tt.want) {
 				t.Errorf("New() got = %v, want %v", got, tt.want)
 			}
@@ -195,14 +196,14 @@ func TestNew(t *testing.T) {
 func Test_authn_Authenticate(t *testing.T) {
 	tests := []struct {
 		name        string
-		agent       func(t *testing.T) *yubiagent.SlotAgent
+		agent       func(t *testing.T) *yubiagent.Slot
 		mappingPath string
 		reqParam    *csr.ReqParam
 		wantErr     bool
 	}{
 		{
 			name: "happy path",
-			agent: func(t *testing.T) *yubiagent.SlotAgent {
+			agent: func(t *testing.T) *yubiagent.Slot {
 				caCert, _, caPriv, err := testSelfSignX509Cert()
 				if err != nil {
 					t.Fatal(err)
@@ -216,7 +217,7 @@ func Test_authn_Authenticate(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				agent := yubiagent.NewSlotAgentWithAttrs(nil, "9a", nil, cert, 0)
+				agent := yubiagent.NewSlotWithAttrs(nil, "9a", nil, cert, 0)
 				return agent
 			},
 			reqParam: &csr.ReqParam{
@@ -226,7 +227,7 @@ func Test_authn_Authenticate(t *testing.T) {
 		},
 		{
 			name: "no user found in the mapping",
-			agent: func(t *testing.T) *yubiagent.SlotAgent {
+			agent: func(t *testing.T) *yubiagent.Slot {
 				caCert, _, caPriv, err := testSelfSignX509Cert()
 				if err != nil {
 					t.Fatal(err)
@@ -235,7 +236,7 @@ func Test_authn_Authenticate(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				agent := yubiagent.NewSlotAgentWithAttrs(nil, "9a", nil, cert, 0)
+				agent := yubiagent.NewSlotWithAttrs(nil, "9a", nil, cert, 0)
 				return agent
 			},
 			reqParam: &csr.ReqParam{
@@ -246,7 +247,7 @@ func Test_authn_Authenticate(t *testing.T) {
 		},
 		{
 			name: "failed to read mapping file",
-			agent: func(t *testing.T) *yubiagent.SlotAgent {
+			agent: func(t *testing.T) *yubiagent.Slot {
 				caCert, _, caPriv, err := testSelfSignX509Cert()
 				if err != nil {
 					t.Fatal(err)
@@ -255,7 +256,7 @@ func Test_authn_Authenticate(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				agent := yubiagent.NewSlotAgentWithAttrs(nil, "9a", nil, cert, 0)
+				agent := yubiagent.NewSlotWithAttrs(nil, "9a", nil, cert, 0)
 				return agent
 			},
 			reqParam: &csr.ReqParam{
@@ -266,7 +267,7 @@ func Test_authn_Authenticate(t *testing.T) {
 		},
 		{
 			name: "invalid user",
-			agent: func(t *testing.T) *yubiagent.SlotAgent {
+			agent: func(t *testing.T) *yubiagent.Slot {
 				caCert, _, caPriv, err := testSelfSignX509Cert()
 				if err != nil {
 					t.Fatal(err)
@@ -280,7 +281,7 @@ func Test_authn_Authenticate(t *testing.T) {
 				if err != nil {
 					t.Fatal(err)
 				}
-				agent := yubiagent.NewSlotAgentWithAttrs(nil, "9a", nil, cert, 0)
+				agent := yubiagent.NewSlotWithAttrs(nil, "9a", nil, cert, 0)
 				return agent
 			},
 			reqParam: &csr.ReqParam{
@@ -294,7 +295,7 @@ func Test_authn_Authenticate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			agent := tt.agent(t)
 			a := &authn{
-				slotAgent:       agent,
+				slot:            agent,
 				yubikeyMappings: tt.mappingPath,
 			}
 			if err := a.Authenticate(tt.reqParam); (err != nil) != tt.wantErr {

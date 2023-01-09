@@ -22,6 +22,7 @@ import (
 
 	"github.com/golang/mock/gomock"
 	"github.com/theparanoids/ysshra/agent/yubiagent"
+	"github.com/theparanoids/ysshra/agent/yubiagent/mock"
 )
 
 func testSignX509Cert(unsignedCert, caCert *x509.Certificate, pubKey *rsa.PublicKey,
@@ -107,7 +108,7 @@ func TestNew(t *testing.T) {
 			agent: func(t *testing.T) (yubiagent.YubiAgent, map[string]interface{}) {
 				mockCtrl := gomock.NewController(t)
 				defer mockCtrl.Finish()
-				yubicoAgent := yubiagent.NewMockYubiAgent(mockCtrl)
+				yubicoAgent := mock.NewMockYubiAgent(mockCtrl)
 				return yubicoAgent, map[string]interface{}{
 					"f9_certs_dir": "/path/to/f9/certs",
 				}
@@ -117,11 +118,11 @@ func TestNew(t *testing.T) {
 			},
 		},
 		{
-			name: "invalid module conf",
+			name: "invalid module config",
 			agent: func(t *testing.T) (yubiagent.YubiAgent, map[string]interface{}) {
 				mockCtrl := gomock.NewController(t)
 				defer mockCtrl.Finish()
-				yubicoAgent := yubiagent.NewMockYubiAgent(mockCtrl)
+				yubicoAgent := mock.NewMockYubiAgent(mockCtrl)
 				return yubicoAgent, map[string]interface{}{
 					"f9_certs_dir": 123,
 				}
@@ -191,7 +192,7 @@ func Test_authn_Authenticate(t *testing.T) {
 
 				mockCtrl := gomock.NewController(t)
 				t.Cleanup(mockCtrl.Finish)
-				yubicoAgent := yubiagent.NewMockYubiAgent(mockCtrl)
+				yubicoAgent := mock.NewMockYubiAgent(mockCtrl)
 				yubicoAgent.EXPECT().ReadSlot("f9").Return(cert, nil).Times(1)
 				return yubicoAgent, serialPath
 			},
@@ -205,7 +206,7 @@ func Test_authn_Authenticate(t *testing.T) {
 				}
 				mockCtrl := gomock.NewController(t)
 				t.Cleanup(mockCtrl.Finish)
-				yubicoAgent := yubiagent.NewMockYubiAgent(mockCtrl)
+				yubicoAgent := mock.NewMockYubiAgent(mockCtrl)
 				yubicoAgent.EXPECT().ReadSlot("f9").Return(invalidCert, nil).Times(1)
 				return yubicoAgent, ""
 			},
@@ -220,7 +221,7 @@ func Test_authn_Authenticate(t *testing.T) {
 				}
 				mockCtrl := gomock.NewController(t)
 				t.Cleanup(mockCtrl.Finish)
-				yubicoAgent := yubiagent.NewMockYubiAgent(mockCtrl)
+				yubicoAgent := mock.NewMockYubiAgent(mockCtrl)
 				yubicoAgent.EXPECT().ReadSlot("f9").Return(invalidCert, errors.New("some error")).Times(1)
 				return yubicoAgent, ""
 			},
@@ -247,7 +248,7 @@ func Test_authn_Authenticate(t *testing.T) {
 
 				mockCtrl := gomock.NewController(t)
 				t.Cleanup(mockCtrl.Finish)
-				yubicoAgent := yubiagent.NewMockYubiAgent(mockCtrl)
+				yubicoAgent := mock.NewMockYubiAgent(mockCtrl)
 				yubicoAgent.EXPECT().ReadSlot("f9").Return(cert, nil).Times(1)
 				return yubicoAgent, serialPath
 			},
@@ -274,7 +275,7 @@ func Test_authn_Authenticate(t *testing.T) {
 
 				mockCtrl := gomock.NewController(t)
 				t.Cleanup(mockCtrl.Finish)
-				yubicoAgent := yubiagent.NewMockYubiAgent(mockCtrl)
+				yubicoAgent := mock.NewMockYubiAgent(mockCtrl)
 				yubicoAgent.EXPECT().ReadSlot("f9").Return(cert, nil).Times(1)
 				return yubicoAgent, serialPath
 			},
@@ -301,7 +302,7 @@ func Test_authn_Authenticate(t *testing.T) {
 
 				mockCtrl := gomock.NewController(t)
 				t.Cleanup(mockCtrl.Finish)
-				yubicoAgent := yubiagent.NewMockYubiAgent(mockCtrl)
+				yubicoAgent := mock.NewMockYubiAgent(mockCtrl)
 				yubicoAgent.EXPECT().ReadSlot("f9").Return(cert, nil).Times(1)
 				return yubicoAgent, serialPath
 			},

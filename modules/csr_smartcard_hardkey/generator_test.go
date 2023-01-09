@@ -16,6 +16,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/theparanoids/crypki/proto"
 	"github.com/theparanoids/ysshra/agent/yubiagent"
+	"github.com/theparanoids/ysshra/agent/yubiagent/mock"
 	"github.com/theparanoids/ysshra/crypki"
 	"github.com/theparanoids/ysshra/csr"
 	"github.com/theparanoids/ysshra/keyid"
@@ -37,7 +38,7 @@ func TestNew(t *testing.T) {
 			agent: func(t *testing.T) (sshagent.Agent, map[string]interface{}) {
 				mockCtrl := gomock.NewController(t)
 				t.Cleanup(mockCtrl.Finish)
-				yubicoAgent := yubiagent.NewMockYubiAgent(mockCtrl)
+				yubicoAgent := mock.NewMockYubiAgent(mockCtrl)
 
 				happyPathAttestCert := &x509.Certificate{
 					PublicKey: &rsa.PublicKey{},
@@ -57,7 +58,7 @@ func TestNew(t *testing.T) {
 				}
 			},
 			want: &generator{
-				c: &conf{
+				c: &config{
 					TouchPolicy:     1,
 					PrincipalsTpl:   "<logname>",
 					Slot:            "9a",
@@ -71,7 +72,7 @@ func TestNew(t *testing.T) {
 			agent: func(t *testing.T) (sshagent.Agent, map[string]interface{}) {
 				mockCtrl := gomock.NewController(t)
 				t.Cleanup(mockCtrl.Finish)
-				yubicoAgent := yubiagent.NewMockYubiAgent(mockCtrl)
+				yubicoAgent := mock.NewMockYubiAgent(mockCtrl)
 				return yubicoAgent, map[string]interface{}{
 					"touch_policy": "invalid",
 				}
@@ -98,7 +99,7 @@ func TestNew(t *testing.T) {
 			agent: func(t *testing.T) (sshagent.Agent, map[string]interface{}) {
 				mockCtrl := gomock.NewController(t)
 				t.Cleanup(mockCtrl.Finish)
-				yubicoAgent := yubiagent.NewMockYubiAgent(mockCtrl)
+				yubicoAgent := mock.NewMockYubiAgent(mockCtrl)
 				yubicoAgent.EXPECT().AttestSlot("9a").Return(nil, errors.New("invalid attestation")).Times(1)
 				return yubicoAgent, map[string]interface{}{
 					"touch_policy":      1,
@@ -125,7 +126,7 @@ func TestNew(t *testing.T) {
 			if !ok {
 				t.Errorf("the generator is not the correct type")
 			}
-			tt.want.slotAgent = gotMod.slotAgent
+			tt.want.slot = gotMod.slot
 			if !reflect.DeepEqual(gotMod, tt.want) {
 				t.Errorf("New() got = %v, want %v", got, tt.want)
 			}
@@ -136,8 +137,8 @@ func TestNew(t *testing.T) {
 func Test_generator_Generate(t *testing.T) {
 	tests := []struct {
 		name    string
-		agent   func(t *testing.T) *yubiagent.SlotAgent
-		c       *conf
+		agent   func(t *testing.T) *yubiagent.Slot
+		c       *config
 		opt     *modules.CSROption
 		param   *csr.ReqParam
 		want    func(t *testing.T) *proto.SSHCertificateSigningRequest
@@ -145,7 +146,7 @@ func Test_generator_Generate(t *testing.T) {
 	}{
 		{
 			name: "happy path",
-			agent: func(t *testing.T) *yubiagent.SlotAgent {
+			agent: func(t *testing.T) *yubiagent.Slot {
 				priv, err := rsa.GenerateKey(rand.Reader, 2048)
 				if err != nil {
 					t.Error(err)
@@ -154,9 +155,9 @@ func Test_generator_Generate(t *testing.T) {
 				if err != nil {
 					t.Error(err)
 				}
-				return yubiagent.NewSlotAgentWithAttrs(nil, "9a", pub, nil, keyid.DefaultTouch)
+				return yubiagent.NewSlotWithAttrs(nil, "9a", pub, nil, keyid.DefaultTouch)
 			},
-			c: &conf{
+			c: &config{
 				IsFirefighter:   true,
 				TouchPolicy:     1,
 				PrincipalsTpl:   "<logname>",
@@ -209,7 +210,7 @@ func Test_generator_Generate(t *testing.T) {
 		},
 		{
 			name: "failed to lookup key identifier",
-			agent: func(t *testing.T) *yubiagent.SlotAgent {
+			agent: func(t *testing.T) *yubiagent.Slot {
 				priv, err := rsa.GenerateKey(rand.Reader, 2048)
 				if err != nil {
 					t.Error(err)
@@ -218,9 +219,9 @@ func Test_generator_Generate(t *testing.T) {
 				if err != nil {
 					t.Error(err)
 				}
-				return yubiagent.NewSlotAgentWithAttrs(nil, "9a", pub, nil, keyid.DefaultTouch)
+				return yubiagent.NewSlotWithAttrs(nil, "9a", pub, nil, keyid.DefaultTouch)
 			},
-			c: &conf{},
+			c: &config{},
 			opt: &modules.CSROption{
 				KeyIdentifiers: map[x509.PublicKeyAlgorithm]string{},
 				KeyIDVersion:   1,
@@ -236,9 +237,9 @@ func Test_generator_Generate(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g := &generator{
-				slotAgent: tt.agent(t),
-				c:         tt.c,
-				opt:       tt.opt,
+				slot: tt.agent(t),
+				c:    tt.c,
+				opt:  tt.opt,
 			}
 			got, err := g.Generate(tt.param)
 			if (err != nil) != tt.wantErr {

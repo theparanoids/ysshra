@@ -9,8 +9,8 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
-// DecodeModuleConf decodes module configuration.
-func DecodeModuleConf(undecodedConf interface{}, modConf interface{}) error {
+// DecodeModuleConfig decodes module configuration.
+func DecodeModuleConfig(undecodedConf interface{}, modConf interface{}) error {
 	config := &mapstructure.DecoderConfig{
 		DecodeHook: StringToX509PublicKeyAlgo(),
 		Metadata:   nil,

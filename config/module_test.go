@@ -38,11 +38,11 @@ func TestExtractModuleConf(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			conf := &exampleModConf{}
-			if err := DecodeModuleConf(tt.undecodedConf, &conf); (err != nil) != tt.wantErr {
-				t.Errorf("DecodeModuleConf() error = %v, wantErr %v", err, tt.wantErr)
+			if err := DecodeModuleConfig(tt.undecodedConf, &conf); (err != nil) != tt.wantErr {
+				t.Errorf("DecodeModuleConfig() error = %v, wantErr %v", err, tt.wantErr)
 			}
 			if reflect.DeepEqual(conf, tt.wantConf) {
-				t.Errorf("DecodeModuleConf() got = %v, want %v", conf, tt.wantConf)
+				t.Errorf("DecodeModuleConfig() got = %v, want %v", conf, tt.wantConf)
 			}
 		})
 	}

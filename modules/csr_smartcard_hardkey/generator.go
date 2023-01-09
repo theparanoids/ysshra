@@ -8,7 +8,7 @@ import (
 
 	"github.com/theparanoids/crypki/proto"
 	"github.com/theparanoids/ysshra/agent/yubiagent"
-	"github.com/theparanoids/ysshra/config"
+	yconfig "github.com/theparanoids/ysshra/config"
 	"github.com/theparanoids/ysshra/crypki"
 	"github.com/theparanoids/ysshra/csr"
 	"github.com/theparanoids/ysshra/keyid"
@@ -24,15 +24,15 @@ const (
 )
 
 type generator struct {
-	slotAgent *yubiagent.SlotAgent
-	c         *conf
-	opt       *modules.CSROption
+	slot *yubiagent.Slot
+	c    *config
+	opt  *modules.CSROption
 }
 
 // New returns a CSR generator module.
 func New(ag agent.Agent, c map[string]interface{}, opt *modules.CSROption) (modules.CSRModule, error) {
-	conf := &conf{}
-	if err := config.DecodeModuleConf(c, conf); err != nil {
+	conf := &config{}
+	if err := yconfig.DecodeModuleConfig(c, conf); err != nil {
 		return nil, fmt.Errorf("failed to initilaize module %q, %v", Name, err)
 	}
 
@@ -41,15 +41,15 @@ func New(ag agent.Agent, c map[string]interface{}, opt *modules.CSROption) (modu
 		return nil, fmt.Errorf("yubiagent is the only supported agent in module %q", Name)
 	}
 
-	slotAgent, err := yubiagent.NewSlotAgent(yubiAgent, conf.Slot)
+	slot, err := yubiagent.NewSlot(yubiAgent, conf.Slot)
 	if err != nil {
 		return nil, fmt.Errorf("failed to access slot agent in module %q, %v", Name, err)
 	}
 
 	return &generator{
-		slotAgent: slotAgent,
-		c:         conf,
-		opt:       opt,
+		slot: slot,
+		c:    conf,
+		opt:  opt,
 	}, nil
 }
 
@@ -82,7 +82,7 @@ func (g *generator) Generate(param *csr.ReqParam) ([]csr.AgentKey, error) {
 		Extensions: crypki.GetDefaultExtension(),
 		Validity:   g.c.CertValiditySec,
 		Principals: kid.Principals,
-		PublicKey:  string(ssh.MarshalAuthorizedKey(g.slotAgent.PublicKey())),
+		PublicKey:  string(ssh.MarshalAuthorizedKey(g.slot.PublicKey())),
 	}
 
 	var err error
@@ -90,6 +90,6 @@ func (g *generator) Generate(param *csr.ReqParam) ([]csr.AgentKey, error) {
 	if err != nil {
 		return nil, err
 	}
-	g.slotAgent.RegisterCSR(request)
-	return []csr.AgentKey{g.slotAgent}, nil
+	g.slot.RegisterCSR(request)
+	return []csr.AgentKey{g.slot}, nil
 }

@@ -3,7 +3,7 @@
 
 package authn_slot_attest
 
-type conf struct {
+type config struct {
 	// Slot is the slot number inside a yubikey.
 	Slot string `mapstructure:"slot"`
 	// PIVRootCA is the file path to the root CA of yubikey PIV (Personal Identity Verification).

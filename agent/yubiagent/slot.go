@@ -63,6 +63,7 @@ func NewSlot(yubiAgent YubiAgent, code string) (*Slot, error) {
 }
 
 // NewSlotWithAttrs returns a new slot agent with attribute values.
+// The function is for unit tests.
 func NewSlotWithAttrs(yubiAgent YubiAgent, code string, public ssh.PublicKey,
 	attest *x509.Certificate, policy keyid.TouchPolicy) *Slot {
 	return &Slot{

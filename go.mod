@@ -15,7 +15,7 @@ require (
 	go.uber.org/multierr v1.9.0
 	golang.org/x/crypto v0.0.0-20220817201139-bc19a97f63c8
 	golang.org/x/net v0.4.0
-	google.golang.org/grpc v1.52.0
+	google.golang.org/grpc v1.52.1
 )
 
 require (

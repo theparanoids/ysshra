@@ -9,7 +9,7 @@ require (
 	github.com/google/go-cmp v0.5.9
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/rs/zerolog v1.28.0
+	github.com/rs/zerolog v1.29.0
 	github.com/square/certstrap v1.3.0
 	github.com/theparanoids/crypki v1.12.3
 	go.uber.org/multierr v1.9.0

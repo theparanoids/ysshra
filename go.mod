@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/Microsoft/go-winio v0.6.0
-	github.com/go-playground/validator/v10 v10.11.1
+	github.com/go-playground/validator/v10 v10.11.2
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.9
 	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
@@ -13,7 +13,7 @@ require (
 	github.com/square/certstrap v1.3.0
 	github.com/theparanoids/crypki v1.12.3
 	go.uber.org/multierr v1.9.0
-	golang.org/x/crypto v0.0.0-20220817201139-bc19a97f63c8
+	golang.org/x/crypto v0.5.0
 	golang.org/x/net v0.5.0
 	google.golang.org/grpc v1.52.1
 )
@@ -21,8 +21,8 @@ require (
 require (
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
-	github.com/go-playground/locales v0.14.0 // indirect
-	github.com/go-playground/universal-translator v0.18.0 // indirect
+	github.com/go-playground/locales v0.14.1 // indirect
+	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/golang/protobuf v1.5.2 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.11.2 // indirect
 	github.com/howeyc/gopass v0.0.0-20210920133722-c8aef6fb66ef // indirect

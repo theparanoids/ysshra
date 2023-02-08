@@ -66,8 +66,8 @@ func TestValidateSSHCertTime(t *testing.T) {
 		{
 			name:        "expired-cert-current-zero",
 			certNil:     false,
-			currentTime: time.Time{},
-			expectValid: false,
+			currentTime: time.Time{}, // if time is zero, ValidateSSHCertTime() uses current time.
+			expectValid: true,
 		},
 		{
 			name:        "future-cert",
@@ -84,6 +84,7 @@ func TestValidateSSHCertTime(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 			cert, _ := testSSHCertificate(t, "keyID", nil)

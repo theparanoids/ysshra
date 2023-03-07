@@ -17,12 +17,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/theparanoids/crypki/server/scheduler"
-
 	"github.com/theparanoids/crypki"
 	"github.com/theparanoids/crypki/config"
 	"github.com/theparanoids/crypki/pkcs11"
 	"github.com/theparanoids/crypki/proto"
+	"github.com/theparanoids/crypki/server/scheduler"
 	"github.com/theparanoids/ysshra/csr/transid"
 	"github.com/theparanoids/ysshra/keyid"
 	"github.com/theparanoids/ysshra/sshutils/key"
@@ -31,10 +30,9 @@ import (
 )
 
 const (
-	hostPrivKeyPath       = "./hostkey"
-	hostPubKeyPath        = "./hostkey.pub"
-	hostCertPath          = "./hostkey-cert.pub"
-	defaultRequestTimeout = 10
+	hostPrivKeyPath = "./hostkey"
+	hostPubKeyPath  = "./hostkey.pub"
+	hostCertPath    = "./hostkey-cert.pub"
 )
 
 var (
@@ -42,6 +40,7 @@ var (
 	principals   []string
 	validityDays uint64
 	keyType      string
+	reqUser      string
 	keyAlgorithm key.PublicKeyAlgo
 )
 
@@ -51,6 +50,7 @@ func parseFlags() {
 	flag.Uint64Var(&validityDays, "days", 730, "validity period in days")
 	flag.StringVar(&prins, "prins", "", "principal list")
 	flag.StringVar(&keyType, "keyType", "", "key algorithm type to generate key/cert pair (supported options: RSA2048, ECCP256, ECCP384)")
+	flag.StringVar(&reqUser, "reqUser", "devops", "user to request the certificate")
 	flag.Parse()
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
@@ -81,7 +81,7 @@ func constructUnsignedSSHCert(pub ssh.PublicKey) (*ssh.Certificate, error) {
 		IsHWKey:       false,
 		IsHeadless:    true,
 		IsFirefighter: false,
-		ReqUser:       "PENG:devops",
+		ReqUser:       reqUser,
 		ReqHost:       hostname,
 		ReqIP:         getLocalIP(),
 	}

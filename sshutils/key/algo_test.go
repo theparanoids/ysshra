@@ -12,8 +12,9 @@ func TestGetSSHKeyAlgo(t *testing.T) {
 		"rsa2048 key":  {"RSA2048", RSA2048, false},
 		"ec p-256 key": {"ECCP256", ECDSAsecp256r1, false},
 		"ec p-384 key": {"ECCP384", ECDSAsecp384r1, false},
-		"invalid key":  {"ECCP521", RSA2048, true},
-		"empty key":    {"ED25519", RSA2048, true},
+		"ec p-521 key": {"ECCP521", ECDSAsecp521r1, false},
+		"invalid key":  {"INVALID", RSA2048, true},
+		"empty key":    {"", RSA2048, true},
 	}
 	for label, tt := range table {
 		got, err := GetSSHKeyAlgo(tt.keyType)

@@ -10,6 +10,7 @@ import (
 	"crypto/elliptic"
 	"crypto/rand"
 	"crypto/rsa"
+	"fmt"
 
 	"golang.org/x/crypto/ssh"
 )
@@ -27,6 +28,47 @@ const (
 	// ED25519 is not supported in yubico hardware keys currently.
 	ED25519
 )
+
+// String stringifies the PublicKeyAlgo.
+func (p PublicKeyAlgo) String() string {
+	switch p {
+	case RSA2048:
+		return "RSA2048"
+	case RSA4096:
+		return "RSA4096"
+	case ECDSAsecp256r1:
+		return "ECCP256"
+	case ECDSAsecp384r1:
+		return "ECCP384"
+	case ECDSAsecp521r1:
+		return "ECCP521"
+	case ED25519:
+		return "ED25519"
+	default:
+		return ""
+	}
+}
+
+// SSHKeyAlgoStrMap contains the mapping from strings to supported public key algorithms.
+var SSHKeyAlgoStrMap = map[string]PublicKeyAlgo{
+	"RSA2048": RSA2048,
+	"RSA4096": RSA4096,
+	"ECCP256": ECDSAsecp256r1,
+	"ECCP384": ECDSAsecp384r1,
+	"ECCP521": ECDSAsecp521r1,
+	"ED25519": ED25519,
+}
+
+// GetSSHKeyAlgo returns a specific public key algorithm by the given algo string.
+// It returns RSA2048 and an error if no valid algorithms found.
+func GetSSHKeyAlgo(keyType string) (PublicKeyAlgo, error) {
+	pkAlgo, ok := SSHKeyAlgoStrMap[keyType]
+	if !ok {
+		return RSA2048, fmt.Errorf("failed to create the key algorithm for key type %q, "+
+			"used %s instead", keyType, RSA2048.String())
+	}
+	return pkAlgo, nil
+}
 
 // GenerateKeyPair returns a new pair of keys for the specified algorithm.
 // Caller should cast the returned private key to one of

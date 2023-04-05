@@ -12,7 +12,7 @@ require (
 	github.com/rs/zerolog v1.29.0
 	github.com/square/certstrap v1.3.0
 	github.com/theparanoids/crypki v1.13.0
-	go.uber.org/multierr v1.10.0
+	go.uber.org/multierr v1.11.0
 	golang.org/x/crypto v0.7.0
 	golang.org/x/net v0.8.0
 	google.golang.org/grpc v1.54.0

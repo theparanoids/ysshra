@@ -13,8 +13,8 @@ require (
 	github.com/square/certstrap v1.3.0
 	github.com/theparanoids/crypki v1.15.0
 	go.uber.org/multierr v1.11.0
-	golang.org/x/crypto v0.13.0
-	golang.org/x/net v0.15.0
+	golang.org/x/crypto v0.14.0
+	golang.org/x/net v0.16.0
 	google.golang.org/grpc v1.58.2
 )
 
@@ -37,8 +37,8 @@ require (
 	github.com/urfave/cli v1.22.9 // indirect
 	go.step.sm/crypto v0.17.2 // indirect
 	golang.org/x/mod v0.12.0 // indirect
-	golang.org/x/sys v0.12.0 // indirect
-	golang.org/x/term v0.12.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/term v0.13.0 // indirect
 	golang.org/x/text v0.13.0 // indirect
 	golang.org/x/tools v0.11.0 // indirect
 	google.golang.org/genproto v0.0.0-20230711160842-782d3b101e98 // indirect

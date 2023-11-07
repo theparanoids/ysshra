@@ -11,7 +11,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/rs/zerolog v1.31.0
 	github.com/square/certstrap v1.3.0
-	github.com/theparanoids/crypki v1.15.0
+	github.com/theparanoids/crypki v1.16.6
 	go.uber.org/multierr v1.11.0
 	golang.org/x/crypto v0.14.0
 	golang.org/x/net v0.17.0
@@ -26,7 +26,7 @@ require (
 	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/golang/glog v1.1.2 // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.18.0 // indirect
 	github.com/howeyc/gopass v0.0.0-20210920133722-c8aef6fb66ef // indirect
 	github.com/leodido/go-urn v1.2.4 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect

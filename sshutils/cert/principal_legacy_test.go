@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-func TestGetPrincipals(t *testing.T) {
+func TestGetPrincipalsLegacy(t *testing.T) {
 	tests := []struct {
 		name       string
 		principals []string
@@ -42,7 +42,7 @@ func TestGetPrincipals(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetPrincipals(tt.principals, tt.certType); !reflect.DeepEqual(got, tt.want) {
+			if got := GetPrincipalsLegacy(tt.principals, tt.certType); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("GetPrincipals() = %v, want %v", got, tt.want)
 			}
 		})

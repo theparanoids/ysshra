@@ -14,7 +14,7 @@ require (
 	github.com/theparanoids/crypki v1.16.9
 	go.uber.org/multierr v1.11.0
 	golang.org/x/crypto v0.21.0
-	golang.org/x/net v0.21.0
+	golang.org/x/net v0.22.0
 	google.golang.org/grpc v1.62.1
 )
 

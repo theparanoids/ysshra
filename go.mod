@@ -3,7 +3,7 @@ module github.com/theparanoids/ysshra
 go 1.19
 
 require (
-	github.com/Microsoft/go-winio v0.6.1
+	github.com/Microsoft/go-winio v0.6.2
 	github.com/go-playground/validator/v10 v10.19.0
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.6.0

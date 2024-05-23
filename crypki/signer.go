@@ -56,7 +56,6 @@ func NewSigner(conf SignerConfig) (*Signer, error) {
 
 	dialOptions := []grpc.DialOption{
 		grpc.WithTransportCredentials(clientCreds),
-		grpc.WithBlock(),
 		// Unary interceptors can be specified as a DialOption, using
 		// WithUnaryInterceptor when creating a ClientConn.
 		// When a unary interceptor(s) is set on a ClientConn, gRPC
@@ -91,7 +90,7 @@ func (s *Signer) Sign(ctx context.Context, request *pb.SSHCertificateSigningRequ
 // postUserSSHCertificate establishes the gRPC connection to the Crypki Server, and sends the signing request.
 func (s *Signer) postUserSSHCertificate(ctx context.Context, csr *pb.SSHCertificateSigningRequest, endpoint string) (certs []ssh.PublicKey, comments []string, err error) {
 	const apiName = "postUserSSHCertificate"
-	conn, err := EstablishClientConn(ctx, endpoint, s.dialOptions...)
+	conn, err := EstablishClientConn(endpoint, s.dialOptions...)
 	if err != nil {
 		return nil, nil, status.Errorf(status.Code(err), "%s: failed to establish connection, err: %v", apiName, err)
 	}

@@ -164,7 +164,7 @@ func TestSignerPostUserSSHCertificate(t *testing.T) {
 			s := Signer{
 				dialOptions: dialOpts,
 			}
-			got, _, err := s.postUserSSHCertificate(ctx, tt.csr, "")
+			got, _, err := s.postUserSSHCertificate(ctx, tt.csr, "127.0.0.1")
 			want, _, _ := key.GetPublicKeysFromBytes([]byte(tt.out.Key))
 			if tt.expectedErr != nil {
 				if err == nil {
@@ -216,7 +216,7 @@ func TestSignerPostUserSSHCertificateBackoffTimeoutRetry(t *testing.T) {
 	s := Signer{
 		dialOptions: dialOpts,
 	}
-	_, _, err := s.postUserSSHCertificate(ctx, invalidCSR, "")
+	_, _, err := s.postUserSSHCertificate(ctx, invalidCSR, "127.0.0.1")
 	if err == nil {
 		t.Errorf("expected error for the test, got nil")
 	}

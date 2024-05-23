@@ -4,8 +4,6 @@
 package crypki
 
 import (
-	"context"
-
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -23,8 +21,8 @@ func GetDefaultExtension() map[string]string {
 }
 
 // EstablishClientConn establishes a GRPC connection to the crypki endpoint.
-func EstablishClientConn(ctx context.Context, endpoint string, opts ...grpc.DialOption) (conn *grpc.ClientConn, err error) {
-	conn, err = grpc.DialContext(ctx, endpoint, opts...)
+func EstablishClientConn(endpoint string, opts ...grpc.DialOption) (conn *grpc.ClientConn, err error) {
+	conn, err = grpc.NewClient(endpoint, opts...)
 	if err != nil {
 		return nil, status.Errorf(codes.Unavailable, "failed to dial to Crypki: %v", err)
 	}

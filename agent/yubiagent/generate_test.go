@@ -4,6 +4,8 @@
 package yubiagent
 
 //go:generate mockgen -destination=./mock_shimagent_test.go -package=yubiagent github.com/theparanoids/ysshra/agent/shimagent ShimAgent
+//go:generate mkdir -p ./mock
+//go:generate mockgen -destination=./mock/yubiagent.go -package=mock github.com/theparanoids/ysshra/agent/yubiagent YubiAgent
 
 // #######################################################
 // Following commands generates testdata for client_test.go.

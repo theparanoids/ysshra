@@ -675,6 +675,9 @@ func parsePublicKey(algo x509.PublicKeyAlgorithm, keyData *publicKeyInfo) (inter
 			return nil, errors.New("x509: parsing public key for ECDSA")
 		}
 		encodedPubKey := p.Bytes()
+		// The elliptic.Unmarshal() function has been deprecated in Go.
+		// As a workaround, we manually parse the public key by its index.
+		// For more details, see: https://github.com/golang/go/issues/63963
 		switch p.Curve() {
 		case ecdh.P256():
 			return &ecdsa.PublicKey{

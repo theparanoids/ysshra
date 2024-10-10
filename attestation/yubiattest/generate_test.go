@@ -35,7 +35,8 @@ package yubiattest
 
 // Generate root CA credentials.
 //go:generate certstrap init --passphrase "" --common-name "fake Yubico PIV Root CA" --years 80
-//go:generate ./generate_fake_yubico_piv_attestation_creds.sh ./Fake_Yubico_PIV_Root_CA.crt ./Fake_Yubico_PIV_Root_CA.key
+//go:generate ./generate_fake_yubico_piv_attestation_creds_rsa.sh ./Fake_Yubico_PIV_Root_CA.crt ./Fake_Yubico_PIV_Root_CA.key
+//go:generate ./generate_fake_yubico_piv_attestation_creds_ec.sh ./Fake_Yubico_PIV_Root_CA.crt ./Fake_Yubico_PIV_Root_CA.key
 
 // Move required credentials to ./testdata.
 //go:generate mkdir -p ./testdata

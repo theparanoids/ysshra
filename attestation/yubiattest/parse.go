@@ -6,6 +6,7 @@ package yubiattest
 import (
 	"bytes"
 	"crypto"
+	"crypto/ecdh"
 	"crypto/ecdsa"
 	"crypto/elliptic"
 	"crypto/rsa"
@@ -84,7 +85,6 @@ type pssParameters struct {
 }
 
 var (
-	oidNamedCurveP224 = asn1.ObjectIdentifier{1, 3, 132, 0, 33}
 	oidNamedCurveP256 = asn1.ObjectIdentifier{1, 2, 840, 10045, 3, 1, 7}
 	oidNamedCurveP384 = asn1.ObjectIdentifier{1, 3, 132, 0, 34}
 	oidNamedCurveP521 = asn1.ObjectIdentifier{1, 3, 132, 0, 35}
@@ -618,25 +618,23 @@ type rsaPublicKey struct {
 	E int
 }
 
-func namedCurveFromOID(oid asn1.ObjectIdentifier) elliptic.Curve {
+func ecdhCurveFromOID(oid asn1.ObjectIdentifier) (ecdh.Curve, error) {
 	switch {
-	case oid.Equal(oidNamedCurveP224):
-		return elliptic.P224()
 	case oid.Equal(oidNamedCurveP256):
-		return elliptic.P256()
+		return ecdh.P256(), nil
 	case oid.Equal(oidNamedCurveP384):
-		return elliptic.P384()
+		return ecdh.P384(), nil
 	case oid.Equal(oidNamedCurveP521):
-		return elliptic.P521()
+		return ecdh.P521(), nil
+	default:
+		return nil, errors.New("no matching ANS identifier")
 	}
-	return nil
 }
 
 func parsePublicKey(algo x509.PublicKeyAlgorithm, keyData *publicKeyInfo) (interface{}, error) {
 	asn1Data := keyData.PublicKey.RightAlign()
 	switch algo {
 	case x509.RSA:
-
 		p := new(rsaPublicKey)
 		rest, err := asn1.Unmarshal(asn1Data, p)
 		if err != nil {
@@ -668,20 +666,37 @@ func parsePublicKey(algo x509.PublicKeyAlgorithm, keyData *publicKeyInfo) (inter
 		if len(rest) != 0 {
 			return nil, errors.New("x509: trailing data after ECDSA parameters")
 		}
-		namedCurve := namedCurveFromOID(*namedCurveOID)
-		if namedCurve == nil {
-			return nil, errors.New("x509: unsupported elliptic curve")
+		c, err := ecdhCurveFromOID(*namedCurveOID)
+		if err != nil {
+			return nil, err
 		}
-		x, y := elliptic.Unmarshal(namedCurve, asn1Data)
-		if x == nil {
-			return nil, errors.New("x509: failed to unmarshal elliptic curve point")
+		p, err := c.NewPublicKey(asn1Data)
+		if err != nil {
+			return nil, errors.New("x509: parsing public key for ECDSA")
 		}
-		pub := &ecdsa.PublicKey{
-			Curve: namedCurve,
-			X:     x,
-			Y:     y,
+		encodedPubKey := p.Bytes()
+		switch p.Curve() {
+		case ecdh.P256():
+			return &ecdsa.PublicKey{
+				Curve: elliptic.P256(),
+				X:     big.NewInt(0).SetBytes(encodedPubKey[1:33]),
+				Y:     big.NewInt(0).SetBytes(encodedPubKey[33:]),
+			}, nil
+		case ecdh.P384():
+			return &ecdsa.PublicKey{
+				Curve: elliptic.P384(),
+				X:     big.NewInt(0).SetBytes(encodedPubKey[1:49]),
+				Y:     big.NewInt(0).SetBytes(encodedPubKey[49:]),
+			}, nil
+		case ecdh.P521():
+			return &ecdsa.PublicKey{
+				Curve: elliptic.P521(),
+				X:     big.NewInt(0).SetBytes(encodedPubKey[1:67]),
+				Y:     big.NewInt(0).SetBytes(encodedPubKey[67:]),
+			}, nil
+		default:
+			return nil, errors.New("x509: unsupported ECDSA public key type")
 		}
-		return pub, nil
 	default:
 		return nil, nil
 	}

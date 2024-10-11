@@ -674,6 +674,8 @@ func parsePublicKey(algo x509.PublicKeyAlgorithm, keyData *publicKeyInfo) (inter
 		if err != nil {
 			return nil, errors.New("x509: parsing public key for ECDSA")
 		}
+		// Bytes() guarantees that the byte array of encodedPubKey has a length of 133.
+		// Therefore, we don't need length checks below.
 		encodedPubKey := p.Bytes()
 		// The elliptic.Unmarshal() function has been deprecated in Go.
 		// As a workaround, we manually parse the public key by its index.

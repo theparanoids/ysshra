@@ -28,11 +28,23 @@ func getCertificateFromFile(path string) (*x509.Certificate, error) {
 }
 
 func TestModHex(t *testing.T) {
-	cert, err := getCertificateFromFile("./testdata/fake_yubico_piv_attestation.crt")
+	cert, err := getCertificateFromFile("./testdata/fake_yubico_piv_attestation.rsa.crt")
 	if err != nil {
 		t.Fatal(err)
 	}
 	modhex, err := ModHex(cert)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal([]byte(modhex), []byte("cfcecdcb")) {
+		t.Errorf("output doesn't match, expected %v, got %v", "ccfjdgrf", modhex)
+	}
+
+	cert, err = getCertificateFromFile("./testdata/fake_yubico_piv_attestation.ec.crt")
+	if err != nil {
+		t.Fatal(err)
+	}
+	modhex, err = ModHex(cert)
 	if err != nil {
 		t.Fatal(err)
 	}

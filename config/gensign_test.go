@@ -37,6 +37,13 @@ func TestNewGensignConfig(t *testing.T) {
 						"signer": {
 							"tls_client_key_file": "path_to_tls_client.key",
 							"tls_client_cert_file": "path_to_tls_client.crt"
+						},
+						"otel": {
+							"enabled": true,
+							"otel_collector_endpoint": "localhost:4317",
+							"client_cert_path": "path_to_client_cert.pem",
+							"client_key_path": "path_to_client_key.pem",
+							"ca_cert_path": "path_to_ca_cert.pem"
 						}
 					}`
 				configPath := path.Join(t.TempDir(), "config.json")
@@ -60,6 +67,13 @@ func TestNewGensignConfig(t *testing.T) {
 					"tls_client_cert_file": "path_to_tls_client.crt",
 				},
 				RequestTimeout: 60 * time.Second,
+				OTel: OTelConfig{
+					Enabled:               true,
+					OTELCollectorEndpoint: "localhost:4317",
+					ClientCertPath:        "path_to_client_cert.pem",
+					ClientKeyPath:         "path_to_client_key.pem",
+					CACertPath:            "path_to_ca_cert.pem",
+				},
 			},
 		},
 		{

@@ -14,6 +14,8 @@ import (
 	"github.com/theparanoids/ysshra/internal/backoff"
 	"github.com/theparanoids/ysshra/internal/validate"
 	"github.com/theparanoids/ysshra/sshutils/key"
+	"github.com/theparanoids/ysshra/tlsutils"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"golang.org/x/crypto/ssh"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -43,7 +45,7 @@ func NewSigner(conf SignerConfig) (*Signer, error) {
 		return nil, fmt.Errorf("failed to validate signer config, err: %v", err)
 	}
 
-	tlsCfg, err := TLSConfiguration(&conf)
+	tlsCfg, err := tlsutils.TLSClientConfiguration(conf.TLSClientCertFile, conf.TLSClientKeyFile, conf.TLSCACertFiles)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse tls config, err :%v", err)
 	}
@@ -66,6 +68,7 @@ func NewSigner(conf SignerConfig) (*Signer, error) {
 			grpc_retry.WithPerRetryTimeout(conf.PerTryTimeout),
 			grpc_retry.WithBackoff(backoff.DefaultConfig.Backoff)),
 		),
+		grpc.WithStatsHandler(otelgrpc.NewClientHandler()),
 	}
 
 	signer := &Signer{

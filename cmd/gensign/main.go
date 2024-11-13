@@ -10,6 +10,10 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	otellib "github.com/theparanoids/crypki/otel"
+	"github.com/theparanoids/ysshra/tlsutils"
+	"go.opentelemetry.io/otel/sdk/resource"
+	semconv "go.opentelemetry.io/otel/semconv/v1.27.0"
 
 	"github.com/theparanoids/ysshra/agent/ssh"
 	"github.com/theparanoids/ysshra/config"
@@ -80,6 +84,29 @@ func main() {
 	signer, err := crypki.NewSignerWithGensignConf(*conf)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to create signer")
+	}
+
+	if conf.OTel.Enabled {
+		otelResource, err := resource.Merge(
+			resource.Default(),
+			resource.NewWithAttributes(semconv.SchemaURL, semconv.ServiceNameKey.String("gensign")),
+		)
+		if err != nil {
+			log.Fatal().Err(err).Msg("failed to create otel resource")
+		}
+		otelTLSConf, err := tlsutils.TLSClientConfiguration(conf.OTel.CACertPath, conf.OTel.ClientCertPath,
+			[]string{conf.OTel.ClientKeyPath})
+		if err != nil {
+			log.Fatal().Err(err).Msg("failed to create oTel TLS config")
+		}
+		shutdownProvider := otellib.InitOTelSDK(context.Background(),
+			conf.OTel.OTELCollectorEndpoint, otelTLSConf, otelResource)
+
+		defer func() {
+			if err := shutdownProvider(context.Background()); err != nil {
+				log.Fatal().Err(err).Msg("failed to shut down oTel provider")
+			}
+		}()
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), conf.RequestTimeout)

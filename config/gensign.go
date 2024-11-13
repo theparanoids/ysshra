@@ -45,6 +45,22 @@ type GensignConfig struct {
 	SignerConfig map[string]interface{} `json:"signer"`
 	// Timeout for gensign (in second).
 	RequestTimeout time.Duration `json:"request_timeout"`
+	// OTel is the configuration for connecting to OpenTelemetry collector.
+	OTel OTelConfig `json:"otel"`
+}
+
+// OTelConfig stores the configuration for connecting to OpenTelemetry collector.
+type OTelConfig struct {
+	// Enabled indicates whether to enable OpenTelemetry.
+	Enabled bool `json:"enabled"`
+	// OTelCollectorEndpoint is the endpoint of the OpenTelemetry collector.
+	OTELCollectorEndpoint string `json:"otel_collector_endpoint"`
+	// ClientCertPath is the path to the client certificate.
+	ClientCertPath string `json:"client_cert_path"`
+	// ClientKeyPath is the path to the client key.
+	ClientKeyPath string `json:"client_key_path"`
+	// CACertPath is the path to the CA certificate.
+	CACertPath string `json:"ca_cert_path"`
 }
 
 func (g *GensignConfig) populate() {

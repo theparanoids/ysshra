@@ -11,7 +11,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	otellib "github.com/theparanoids/crypki/otel"
+	"github.com/theparanoids/crypki/otellib"
 	"github.com/theparanoids/ysshra/agent/ssh"
 	"github.com/theparanoids/ysshra/config"
 	"github.com/theparanoids/ysshra/crypki"

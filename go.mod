@@ -13,9 +13,10 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/rs/zerolog v1.33.0
 	github.com/square/certstrap v1.3.0
-	github.com/theparanoids/crypki v1.20.2
+	github.com/theparanoids/crypki v1.20.4
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.56.0
 	go.opentelemetry.io/otel v1.32.0
+	go.opentelemetry.io/otel/metric v1.32.0
 	go.opentelemetry.io/otel/sdk v1.32.0
 	go.uber.org/multierr v1.11.0
 	golang.org/x/crypto v0.29.0
@@ -27,6 +28,7 @@ require (
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/cenkalti/backoff/v4 v4.3.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
+	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/gabriel-vasile/mimetype v1.4.3 // indirect
 	github.com/go-logr/logr v1.4.2 // indirect
 	github.com/go-logr/stdr v1.2.2 // indirect
@@ -42,8 +44,8 @@ require (
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/urfave/cli v1.22.9 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.49.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp v1.32.0 // indirect
-	go.opentelemetry.io/otel/metric v1.32.0 // indirect
 	go.opentelemetry.io/otel/sdk/metric v1.32.0 // indirect
 	go.opentelemetry.io/otel/trace v1.32.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.3.1 // indirect

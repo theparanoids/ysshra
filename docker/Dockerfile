@@ -1,7 +1,7 @@
 # Copyright 2022 Yahoo Inc.
 # Licensed under the terms of the Apache License 2.0. Please see LICENSE file in project root for terms.
 
-FROM golang:1.20
+FROM golang:1.23
 ENV YSSHRA_DIR /go/src/github.com/theparanoids/ysshra
 COPY . ${YSSHRA_DIR}
 WORKDIR ${YSSHRA_DIR}

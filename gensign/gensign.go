@@ -13,6 +13,7 @@ import (
 	"github.com/rs/zerolog/log"
 	"github.com/theparanoids/ysshra/csr"
 	"github.com/theparanoids/ysshra/internal/logkey"
+	"github.com/theparanoids/ysshra/otellib"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -22,6 +23,7 @@ func Run(ctx context.Context, params *csr.ReqParam, handlers []Handler, signer c
 	// Prepare for panic logs
 	defer func() {
 		if r := recover(); r != nil {
+			otellib.ExportPanicMetric(ctx, params, fmt.Sprintf("%v", r))
 			err = NewError(Panic, "", fmt.Errorf(`unexpected crash: %q`, string(debug.Stack())))
 		}
 	}()

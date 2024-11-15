@@ -18,6 +18,14 @@ If you encounter any bugs while using this software, or want to request a new fe
 ### Contribute Code
 Pull requests are welcome for bug fixes. If you want to implement something new, please [request a feature first](#report-a-bug-or-request-a-feature) so we can discuss it.
 
+#### Add license
+
+Please use license headers in all code files. You can apply the `./license_header` template by utilizing [addlicense](https://github.com/google/addlicense).
+
+```sh
+addlicense -f ./license_header ./
+```
+
 #### Creating a Pull Request
 Before you submit any code, we need you to agree to our [Contributor License Agreement](https://yahoocla.herokuapp.com/); this ensures we can continue to protect your contributions under an open source license well into the future.
 

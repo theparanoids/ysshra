@@ -19,7 +19,6 @@ import (
 	"github.com/theparanoids/ysshra/gensign"
 	"github.com/theparanoids/ysshra/gensign/regular"
 	"github.com/theparanoids/ysshra/internal/logkey"
-	ysshra_otellib "github.com/theparanoids/ysshra/otellib"
 	"github.com/theparanoids/ysshra/tlsutils"
 	"go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
@@ -112,12 +111,14 @@ func main() {
 				fileLogger.Warn().Err(err).Msg("failed to shut down oTel provider")
 			}
 		}()
-		ysshra_otellib.InitMeter()
+		gensign.InitOTelMeter()
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), conf.RequestTimeout)
 	defer cancel()
-	if err := gensign.Run(ctx, reqParam, handlers, signer); err != nil {
+
+	err = gensign.Run(ctx, reqParam, handlers, signer)
+	if err != nil {
 		if gensign.IsErrorOfType(err, gensign.Panic) {
 			// gensign will return debug stack in err when panic.
 			// We do not want it to be printed to os.Stderr since it will also go to user's console.
@@ -125,4 +126,5 @@ func main() {
 		}
 		log.Error().Str(logkey.TransIDField, reqParam.TransID).Err(err).Msg("failed to run gensign")
 	}
+	gensign.ExportGensignRunMetric(ctx, err)
 }

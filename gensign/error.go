@@ -16,6 +16,11 @@ type Error struct {
 	handlerName string
 }
 
+// NewErr creates a new Error with the given handler name.
+func NewErr(t ErrorType, err ...error) *Error {
+	return NewError(t, "", err...)
+}
+
 // NewError returns a new Error.
 // param err is optional.
 func NewError(t ErrorType, handlerName string, err ...error) *Error {
@@ -27,6 +32,11 @@ func NewError(t ErrorType, handlerName string, err ...error) *Error {
 		err:         err[0],
 		handlerName: handlerName,
 	}
+}
+
+// NewErrWithMsg returns a new Error with a message.
+func NewErrWithMsg(t ErrorType, msg string) *Error {
+	return NewErrorWithMsg(t, "", msg)
 }
 
 // NewErrorWithMsg returns a new Error with a message.
@@ -73,6 +83,12 @@ const (
 	HandlerGenCSRErr
 	// HandlerConfErr indicates the handler fails to parse the handler config.
 	HandlerConfErr
+	// AllAuthFailed indicates all handler's authentications failed.
+	AllAuthFailed
+	// SignerSignErr indicates the signer fails to sign the certificate.
+	SignerSignErr
+	// AgentOpCertErr indicates the agent fails to operate the certificate.
+	AgentOpCertErr
 	// Panic indicates a panic raised from the handler.
 	Panic
 )
@@ -90,6 +106,12 @@ func (t ErrorType) String() string {
 		return "handler fails to generate csr"
 	case HandlerConfErr:
 		return "handler configuration error"
+	case AllAuthFailed:
+		return "all authentications failed"
+	case SignerSignErr:
+		return "signer fails to sign certificate"
+	case AgentOpCertErr:
+		return "agent fails to operate certificate"
 	case Panic:
 		return "panic"
 	default:

@@ -5,7 +5,6 @@ package gensign
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"runtime/debug"
 	"time"
@@ -39,16 +38,16 @@ func Run(ctx context.Context, params *csr.ReqParam, handlers []Handler, signer c
 		log.Info().Err(err).Str("handler", h.Name()).Msgf("authentication failed")
 	}
 	if handler == nil {
-		return errors.New("all authentications failed")
+		return NewErrWithMsg(AllAuthFailed, "all authentications failed")
 	}
 
 	csrAgentKeys, err := handler.Generate(params)
 	if err != nil {
-		return fmt.Errorf(`failed to generate CSR: %v`, err)
+		return err
 	}
 
 	if len(csrAgentKeys) == 0 {
-		return fmt.Errorf(`no csr generated: %v`, err)
+		return NewErrWithMsg(HandlerGenCSRErr, "no csr generated")
 	}
 
 	for _, agentKey := range csrAgentKeys {
@@ -59,14 +58,14 @@ func Run(ctx context.Context, params *csr.ReqParam, handlers []Handler, signer c
 		for _, csr := range agentKey.CSRs() {
 			cert, comment, err := signer.Sign(ctx, csr)
 			if err != nil {
-				return fmt.Errorf("failed to sign CSR: %v", err)
+				return NewErr(SignerSignErr, fmt.Errorf("failed to sign CSR: %v", err))
 			}
 			certs = append(certs, cert...)
 			comments = append(comments, comment...)
 		}
 		err = agentKey.AddCertsToAgent(certs, comments)
 		if err != nil {
-			return fmt.Errorf("failed to add certificates into the agent: %v", err)
+			return NewErr(AgentOpCertErr, fmt.Errorf("failed to add certificates into the agent: %v", err))
 		}
 	}
 	log.Info().Stringer(logkey.TimeElapseField, time.Since(start)).

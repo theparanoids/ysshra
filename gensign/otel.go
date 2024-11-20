@@ -21,8 +21,8 @@ const (
 
 var meter metric.Meter
 
-// InitOTelMeter initializes the oTel meter for ysshra.
-func InitOTelMeter() {
+// init ensures the oTel meter for ysshra is initialized.
+func init() {
 	meter = otel.GetMeterProvider().Meter(scopeName)
 }
 

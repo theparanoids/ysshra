@@ -111,7 +111,6 @@ func main() {
 				fileLogger.Warn().Err(err).Msg("failed to shut down oTel provider")
 			}
 		}()
-		gensign.InitOTelMeter()
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), conf.RequestTimeout)

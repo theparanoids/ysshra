@@ -6,7 +6,7 @@ toolchain go1.23.0
 
 require (
 	github.com/Microsoft/go-winio v0.6.2
-	github.com/go-playground/validator/v10 v10.22.0
+	github.com/go-playground/validator/v10 v10.23.0
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.6.0
 	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0

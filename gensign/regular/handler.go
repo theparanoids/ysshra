@@ -30,8 +30,6 @@ const (
 	// HandlerName is a unique name to identify a handler.
 	// It is also appended to the cert label.
 	HandlerName = "paranoids.regular"
-	// IsForHumanUser indicates whether this handler should be used for a human user.
-	IsForHumanUser = true
 )
 
 // Handler implements gensign.Handler.

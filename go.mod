@@ -1,6 +1,7 @@
 module github.com/theparanoids/ysshra
 
-go 1.22
+go 1.23.0
+
 require (
 	github.com/Microsoft/go-winio v0.6.2
 	github.com/go-playground/validator/v10 v10.23.0
@@ -13,7 +14,7 @@ require (
 	github.com/theparanoids/crypki v1.20.4
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.56.0
 	go.opentelemetry.io/otel v1.32.0
-	go.opentelemetry.io/otel/metric v1.32.0
+	go.opentelemetry.io/otel/metric v1.32.0st
 	go.opentelemetry.io/otel/sdk v1.32.0
 	go.uber.org/multierr v1.11.0
 	golang.org/x/crypto v0.35.0

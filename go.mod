@@ -14,7 +14,7 @@ require (
 	github.com/theparanoids/crypki v1.20.4
 	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.56.0
 	go.opentelemetry.io/otel v1.32.0
-	go.opentelemetry.io/otel/metric v1.32.0st
+	go.opentelemetry.io/otel/metric v1.32.0
 	go.opentelemetry.io/otel/sdk v1.32.0
 	go.uber.org/multierr v1.11.0
 	golang.org/x/crypto v0.35.0

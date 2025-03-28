@@ -157,7 +157,7 @@ func main() {
 		KeyType:         x509.PublicKeyAlgorithm(cc.KeyType),
 		SignatureAlgo:   x509.SignatureAlgorithm(cc.SignatureAlgo),
 		SessionPoolSize: 2,
-	}}, requireX509CACert, "", nil, nil, config.DefaultPKCS11Timeout) // Hostname, IPs and URI should not be needed for ssh cert signing.
+	}}, requireX509CACert, "", nil, nil, config.DefaultPKCS11Timeout, false) // Hostname, IPs and URI should not be needed for ssh cert signing.
 
 	if err != nil {
 		log.Fatalf("unable to initialize cert signer: %v", err)

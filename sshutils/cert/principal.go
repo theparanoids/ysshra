@@ -3,41 +3,21 @@
 
 package cert
 
+import "strings"
+
 const (
-	// TouchlessLabel is the label for touchless certificates.
-	TouchlessLabel = ":notouch"
-	// TouchLabel is the label for touch certificates.
-	TouchLabel = ":touch"
+	// LognamePlaceholder is the placeholder for logname in a template to generate placeholders.
+	LognamePlaceholder = "<logname>"
+	// SplitChar is the splitter char to split the principals in a template.
+	SplitChar = ","
 )
 
-// GetPrincipals returns the labeled principals based on the certificate type.
-func GetPrincipals(principals []string, certType Type) []string {
-	switch certType {
-	case UnknownCertType:
-		return nil
-	case TouchSudoCert:
-		return getTouchPrincipals(principals)
-	case TouchlessSudoCert:
-		fallthrough
-	case TouchlessCert:
-		return getTouchlessPrincipals(principals)
-	default:
-		return principals
+// GetPrincipals returns a slice of principals based on the given principals template and the SSH logname.
+func GetPrincipals(prinsTpl string, logname string) []string {
+	prins := strings.ReplaceAll(prinsTpl, LognamePlaceholder, logname)
+	principals := strings.Split(prins, SplitChar)
+	for i := range principals {
+		principals[i] = strings.TrimSpace(principals[i])
 	}
-}
-
-func getTouchlessPrincipals(principals []string) []string {
-	var labeledPrincipals []string
-	for _, p := range principals {
-		labeledPrincipals = append(labeledPrincipals, p+TouchlessLabel)
-	}
-	return labeledPrincipals
-}
-
-func getTouchPrincipals(principals []string) []string {
-	var labeledPrincipals []string
-	for _, p := range principals {
-		labeledPrincipals = append(labeledPrincipals, p+TouchLabel)
-	}
-	return labeledPrincipals
+	return principals
 }

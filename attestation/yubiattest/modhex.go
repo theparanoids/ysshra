@@ -8,6 +8,10 @@ import (
 	"fmt"
 )
 
+const (
+	modHexMap = "cbdefghijklnrtuv" // ref: https://developers.yubico.com/yubico-c/Manuals/modhex.1.html
+)
+
 // ModHex extract serial number from attestation certificate
 // and convert it to ModHex format.
 // Ref: https://developers.yubico.com/PIV/Introduction/PIV_attestation.html

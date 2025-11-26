@@ -51,6 +51,12 @@ func TestCreateSelfSignedCertificate(t *testing.T) {
 
 	for _, test := range tests {
 		commonName := "test.example.com"
+
+		policyOID, err := x509.OIDFromInts([]uint64{1, 2, 3})
+		if err != nil {
+			t.Fatalf("%s: failed to build policy OID: %v", test.name, err)
+		}
+
 		template := x509.Certificate{
 			SerialNumber: big.NewInt(1),
 			Subject: pkix.Name{
@@ -90,7 +96,10 @@ func TestCreateSelfSignedCertificate(t *testing.T) {
 			EmailAddresses: []string{"gopher@golang.org"},
 			IPAddresses:    []net.IP{net.IPv4(127, 0, 0, 1).To4(), net.ParseIP("2001:4860:0:2001::68")},
 
-			PolicyIdentifiers:   []asn1.ObjectIdentifier{[]int{1, 2, 3}},
+			PolicyIdentifiers: []asn1.ObjectIdentifier{[]int{1, 2, 3}},
+			Policies: []x509.OID{
+				policyOID,
+			},
 			PermittedDNSDomains: []string{".example.com", "example.com"},
 			ExcludedDNSDomains:  []string{"bar.example.com"},
 

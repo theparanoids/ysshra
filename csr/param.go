@@ -38,8 +38,7 @@ type ReqParam struct {
 	ReqUser string
 	// ReqHost is the user host name that sends request to RA.
 	ReqHost string
-	// TransID stands for transaction ID and serves as the unique identifier for a request.
-	// It should be generated on server-side right after receiving client request.
+	// TransID is the unique identifier for a request: server-generated, optionally prefixed by the client traceId from Attributes when present.
 	TransID string
 	// SSHClientVersion is the version of the SSH Client.
 	SSHClientVersion version.Version
@@ -85,6 +84,12 @@ func NewReqParam(envGetter func(string) string, osArgsGetter func() []string) (*
 		}
 	}
 
+	serverTransID := transid.Generate()
+	transID := serverTransID
+	if tid := strings.TrimSpace(reqAttrs.TraceID); tid != "" {
+		transID = tid + "-" + serverTransID
+	}
+
 	return &ReqParam{
 		NamespacePolicy:  namespacePolicy,
 		HandlerName:      handlerName,
@@ -92,7 +97,7 @@ func NewReqParam(envGetter func(string) string, osArgsGetter func() []string) (*
 		LogName:          logName,
 		ReqUser:          reqAttrs.Username,
 		ReqHost:          reqAttrs.Hostname,
-		TransID:          transid.Generate(),
+		TransID:          transID,
 		SSHClientVersion: sshClientVersion,
 		SignatureAlgo:    x509.SignatureAlgorithm(reqAttrs.SignatureAlgo),
 		Attrs:            reqAttrs,

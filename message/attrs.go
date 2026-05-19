@@ -24,6 +24,8 @@ type Attributes struct {
 	CAPubKeyAlgo x509.PublicKeyAlgorithm `json:"caPubKeyAlgo,omitempty"`
 	// SignatureAlgo is the signing algorithm of the requested certificate. (Not implemented.)
 	SignatureAlgo x509.SignatureAlgorithm `json:"signatureAlgo,omitempty"`
+	// TraceID is an optional client-supplied string; when non-empty the server prepends it to TransID.
+	TraceID string `json:"traceId,omitempty"`
 	// HardKey indicates whether the request is associated to a public key backed in a smartcard hardware.
 	HardKey bool `json:"hardKey"`
 	// Touch2SSH indicates whether the requested certificate requires a touch during SSH login challenge.

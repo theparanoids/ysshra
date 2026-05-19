@@ -6,6 +6,7 @@ package csr
 import (
 	"crypto/x509"
 	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/theparanoids/ysshra/common"
@@ -126,6 +127,65 @@ func TestNewReqParam(t *testing.T) {
 				t.Fatalf("%s: want: %+v, got: %+v", name, test.expectedReqParam, param)
 			}
 		})
+	}
+}
+
+func TestNewReqParam_ClientTraceID(t *testing.T) {
+	t.Parallel()
+	envGetter := func(s string) string {
+		cmd := `{"exts":{"field1":"value1"},"hardKey":true,"hostname":"host.com","ifVer":7,"signatureAlgo":3,"sshClientVersion":"8.1","touch2SSH":false,"traceId":"trace_id_0123456789abcdef0123","username":"user"}`
+		m := map[string]string{
+			"SSH_CONNECTION":       "1.2.3.4 36673 192.168.223.229 22",
+			"LOGNAME":              "user",
+			"SSH_ORIGINAL_COMMAND": cmd,
+		}
+		return m[s]
+	}
+	osArgsGetter := func() []string {
+		return []string{"/usr/bin/gen-sign", "NONS", "Regular"}
+	}
+	param, err := NewReqParam(envGetter, osArgsGetter)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantPrefix := "trace_id_0123456789abcdef0123-"
+	if !strings.HasPrefix(param.TransID, wantPrefix) {
+		t.Fatalf("TransID prefix: got %q", param.TransID)
+	}
+	suffix := strings.TrimPrefix(param.TransID, wantPrefix)
+	if len(suffix) != 10 {
+		t.Fatalf("server trans id suffix: want len 10, got %d (%q)", len(suffix), suffix)
+	}
+	if param.Attrs.TraceID != "trace_id_0123456789abcdef0123" {
+		t.Fatalf("Attrs.TraceID: got %q", param.Attrs.TraceID)
+	}
+}
+
+func TestNewReqParam_ArbitraryTraceIDCombined(t *testing.T) {
+	t.Parallel()
+	envGetter := func(s string) string {
+		cmd := `{"hardKey":true,"hostname":"host.com","ifVer":7,"signatureAlgo":3,"sshClientVersion":"8.1","touch2SSH":false,"traceId":"my-custom-trace","username":"user"}`
+		m := map[string]string{
+			"SSH_CONNECTION":       "1.2.3.4 36673 192.168.223.229 22",
+			"LOGNAME":              "user",
+			"SSH_ORIGINAL_COMMAND": cmd,
+		}
+		return m[s]
+	}
+	osArgsGetter := func() []string {
+		return []string{"/usr/bin/gen-sign", "NONS", "Regular"}
+	}
+	param, err := NewReqParam(envGetter, osArgsGetter)
+	if err != nil {
+		t.Fatal(err)
+	}
+	wantPrefix := "my-custom-trace-"
+	if !strings.HasPrefix(param.TransID, wantPrefix) {
+		t.Fatalf("TransID prefix: got %q", param.TransID)
+	}
+	suffix := strings.TrimPrefix(param.TransID, wantPrefix)
+	if len(suffix) != 10 {
+		t.Fatalf("server trans id suffix: want len 10, got %d (%q)", len(suffix), suffix)
 	}
 }
 

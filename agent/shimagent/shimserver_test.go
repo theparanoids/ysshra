@@ -129,11 +129,22 @@ func TestServer_filter(t *testing.T) {
 					return err
 				}
 
+				// Expired identity only in the underlying agent (not a HardCert in s.certs).
 				if err := s.Add(ag.AddedKey{PrivateKey: priv, Certificate: certExpired, Comment: "expired"}); err != nil {
 					return err
 				}
 
-				if err := s.AddHardCert(certExpired, "expired"); err != nil {
+				// Expired HardCert only in shim memory (AddHardCert never stores the cert in the slave).
+				certExpiredHard := &ssh.Certificate{
+					Key:         signer.PublicKey(),
+					KeyId:       "expired-hardcert",
+					ValidAfter:  uint64(now.Add(-time.Hour).Unix()),
+					ValidBefore: uint64(now.Add(-time.Minute).Unix()),
+				}
+				if err := certExpiredHard.SignCert(rand.Reader, signer); err != nil {
+					return err
+				}
+				if err := s.AddHardCert(certExpiredHard, "expired"); err != nil {
 					return err
 				}
 
@@ -1306,5 +1317,129 @@ func TestServer_Sign(t *testing.T) {
 					cmp.Diff(keys, tt.wantKeys))
 			}
 		})
+	}
+}
+
+// countingAgent wraps an agent.Agent and counts Remove calls.
+type countingAgent struct {
+	ag.Agent
+	removeCalls int
+}
+
+func (c *countingAgent) Remove(key ssh.PublicKey) error {
+	c.removeCalls++
+	return c.Agent.Remove(key)
+}
+
+func (c *countingAgent) Extension(extensionType string, contents []byte) ([]byte, error) {
+	return nil, ag.ErrExtensionUnsupported
+}
+
+func (c *countingAgent) SignWithFlags(key ssh.PublicKey, data []byte, flags ag.SignatureFlags) (*ssh.Signature, error) {
+	if e, ok := c.Agent.(ag.ExtendedAgent); ok {
+		return e.SignWithFlags(key, data, flags)
+	}
+	return c.Sign(key, data)
+}
+
+func TestServer_remove_skipsForwardForInMemoryHardCert(t *testing.T) {
+	t.Parallel()
+
+	now := time.Now()
+	priv, pub, err := createPublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	signer, err := ssh.NewSignerFromKey(priv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cert := &ssh.Certificate{
+		Key:         signer.PublicKey(),
+		KeyId:       `{"prins":[],"transID":"deadbeef","reqUser":"","reqIP":"","reqHost":"","isFirefighter":false,"isHWKey":true,"isHeadless":false,"isNonce":false,"touchPolicy":2,"ver":1}`,
+		ValidAfter:  uint64(now.Add(-time.Hour).Unix()),
+		ValidBefore: uint64(now.Add(time.Hour).Unix()),
+	}
+	if err := cert.SignCert(rand.Reader, signer); err != nil {
+		t.Fatal(err)
+	}
+
+	counting := &countingAgent{Agent: ag.NewKeyring()}
+	s := &Server{
+		agent:                  counting,
+		certs:                  make(map[hashcode]*certificate),
+		upstreamSSHCACertCache: make(map[hashcode]struct{}),
+	}
+	if err := counting.Add(ag.AddedKey{PrivateKey: priv}); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.AddHardCert(cert, "suffix"); err != nil {
+		t.Fatal(err)
+	}
+	counting.removeCalls = 0
+
+	if err := s.Remove(cert); err != nil {
+		t.Fatalf("Remove HardCert: %v", err)
+	}
+	if counting.removeCalls != 0 {
+		t.Fatalf("expected no underlying agent.Remove for in-memory HardCert, got %d", counting.removeCalls)
+	}
+	if _, ok := s.certs[hash(cert.Marshal())]; ok {
+		t.Fatal("expected HardCert removed from in-memory map")
+	}
+	keys, err := counting.List()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(keys) != 1 || !bytes.Equal(keys[0].Marshal(), pub.Marshal()) {
+		t.Fatalf("expected bare key to remain in underlying agent, got %#v", keys)
+	}
+}
+
+func TestServer_remove_forwardsInAgentIdentityNotInMemory(t *testing.T) {
+	t.Parallel()
+
+	now := time.Now()
+	priv, _, err := createPublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	signer, err := ssh.NewSignerFromKey(priv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cert := &ssh.Certificate{
+		Key:         signer.PublicKey(),
+		KeyId:       "keyid",
+		ValidAfter:  uint64(now.Add(-time.Hour).Unix()),
+		ValidBefore: uint64(now.Add(time.Hour).Unix()),
+	}
+	if err := cert.SignCert(rand.Reader, signer); err != nil {
+		t.Fatal(err)
+	}
+
+	counting := &countingAgent{Agent: ag.NewKeyring()}
+	s := &Server{
+		agent:                  counting,
+		certs:                  make(map[hashcode]*certificate),
+		upstreamSSHCACertCache: make(map[hashcode]struct{}),
+	}
+	if err := counting.Add(ag.AddedKey{PrivateKey: priv, Certificate: cert, Comment: "in-agent"}); err != nil {
+		t.Fatal(err)
+	}
+	counting.removeCalls = 0
+
+	if err := s.Remove(cert); err != nil {
+		t.Fatalf("Remove in-agent cert: %v", err)
+	}
+	if counting.removeCalls != 1 {
+		t.Fatalf("expected underlying agent.Remove once when identity is not in s.certs, got %d", counting.removeCalls)
+	}
+	keys, err := counting.List()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(keys) != 0 {
+		t.Fatalf("expected in-agent cert removed, got %#v", keys)
 	}
 }

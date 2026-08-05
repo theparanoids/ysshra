@@ -189,19 +189,20 @@ func newShimAgent(conn io.ReadWriteCloser, noUpstream bool) (*Server, error) {
 func (s *Server) remove(key ssh.PublicKey) error {
 	removed := false
 
-	// Remove the in-memory certificates.
+	// Remove the in-memory certificates (HardCerts from AddHardCert live only here).
 	h := hash(key.Marshal())
 	if _, ok := s.certs[h]; ok {
 		delete(s.certs, h)
 		removed = true
 	}
 
-	// Remove the in-agent key.
-	err := s.agent.Remove(key)
-	// If the public key is from the in-memory certificate, it returns a not found error from the
-	// underlying agent.
-	if err != nil && !removed {
-		return err
+	// HardCerts are stored only in s.certs, not in the underlying agent. Forwarding
+	// their Remove to Windows OpenSSH drops the matching PKCS11 bare key and breaks
+	// subsequent AddHardCert. Skip the slave Remove when we already cleared memory.
+	if !removed {
+		if err := s.agent.Remove(key); err != nil {
+			return err
+		}
 	}
 
 	if s.noUpstreamSSHCACert {

@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"crypto/rand"
 	"crypto/rsa"
+	"errors"
 	"math/big"
 	"sort"
 	"sync"
@@ -1324,10 +1325,14 @@ func TestServer_Sign(t *testing.T) {
 type countingAgent struct {
 	ag.Agent
 	removeCalls int
+	removeErr   error
 }
 
 func (c *countingAgent) Remove(key ssh.PublicKey) error {
 	c.removeCalls++
+	if c.removeErr != nil {
+		return c.removeErr
+	}
 	return c.Agent.Remove(key)
 }
 
@@ -1441,5 +1446,34 @@ func TestServer_remove_forwardsInAgentIdentityNotInMemory(t *testing.T) {
 	}
 	if len(keys) != 0 {
 		t.Fatalf("expected in-agent cert removed, got %#v", keys)
+	}
+}
+
+func TestServer_remove_propagatesUnderlyingRemoveError(t *testing.T) {
+	t.Parallel()
+
+	priv, pub, err := createPublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	wantErr := errors.New("underlying remove failed")
+	counting := &countingAgent{Agent: ag.NewKeyring(), removeErr: wantErr}
+	s := &Server{
+		agent:                  counting,
+		certs:                  make(map[hashcode]*certificate),
+		upstreamSSHCACertCache: make(map[hashcode]struct{}),
+	}
+	if err := counting.Add(ag.AddedKey{PrivateKey: priv}); err != nil {
+		t.Fatal(err)
+	}
+	counting.removeCalls = 0
+
+	err = s.Remove(pub)
+	if !errors.Is(err, wantErr) {
+		t.Fatalf("expected underlying remove error, got %v", err)
+	}
+	if counting.removeCalls != 1 {
+		t.Fatalf("expected underlying agent.Remove once, got %d", counting.removeCalls)
 	}
 }

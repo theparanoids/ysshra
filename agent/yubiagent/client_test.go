@@ -93,19 +93,6 @@ func createClient(s YubiAgent) (c YubiAgent, cleanup func()) {
 	}
 }
 
-func TestAgentConnDoesNotExposeCloser(t *testing.T) {
-	var transport any = agentConn{
-		Reader: bytes.NewReader(nil),
-		Writer: io.Discard,
-	}
-	if _, ok := transport.(io.ReadWriter); !ok {
-		t.Fatal("agentConn must implement io.ReadWriter")
-	}
-	if _, ok := transport.(io.Closer); ok {
-		t.Fatal("agentConn must not expose io.Closer; agent.NewClient would enable its background reader")
-	}
-}
-
 func TestClientAddHardCert(t *testing.T) {
 	agent, cleanup := createClient(testServer(t))
 	defer cleanup()

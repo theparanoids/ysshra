@@ -17,18 +17,8 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 )
 
-// agentConn deliberately exposes only io.ReadWriter. Starting with
-// golang.org/x/crypto v0.54.0, agent.NewClient enables a background response
-// reader when its transport also implements io.Closer. This client performs
-// custom request/response I/O on the same connection, so enabling that reader
-// would race with call for responses and deadlock the client.
-type agentConn struct {
-	io.Reader
-	io.Writer
-}
-
 func newAgentClient(conn io.ReadWriter) agent.ExtendedAgent {
-	return agent.NewClient(agentConn{conn, conn})
+	return agent.NewClient(utils.WithoutCloser(conn))
 }
 
 type client struct {

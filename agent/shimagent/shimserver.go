@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/theparanoids/ysshra/agent/ssh/connection"
+	"github.com/theparanoids/ysshra/agent/utils"
 	"github.com/theparanoids/ysshra/keyid"
 	certutil "github.com/theparanoids/ysshra/sshutils/cert"
 	keyutil "github.com/theparanoids/ysshra/sshutils/key"
@@ -27,16 +28,6 @@ var (
 	errAgentUnlocked    = errors.New("agent: not locked")
 	errAgentNotFoundKey = errors.New("agent: key not found")
 )
-
-// agentConn deliberately exposes only io.ReadWriter. Starting with
-// golang.org/x/crypto v0.54.0, agent.NewClient enables a background response
-// reader when its transport also implements io.Closer. The shim's Forward
-// method performs raw request/response I/O on the same connection, so enabling
-// that reader would race with Forward for responses and deadlock the shim.
-type agentConn struct {
-	io.Reader
-	io.Writer
-}
 
 type certificate struct {
 	*ssh.Certificate
@@ -166,7 +157,7 @@ func newShimAgent(conn io.ReadWriteCloser, noUpstream bool) (*Server, error) {
 
 	srv := &Server{
 		conn:                   conn,
-		agent:                  agent.NewClient(agentConn{conn, conn}),
+		agent:                  agent.NewClient(utils.WithoutCloser(conn)),
 		certs:                  make(map[hashcode]*certificate),
 		noUpstreamSSHCACert:    noUpstream,
 		upstreamSSHCACertCache: make(map[hashcode]struct{}),

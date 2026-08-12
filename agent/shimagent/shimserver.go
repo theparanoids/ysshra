@@ -14,6 +14,7 @@ import (
 	"sync"
 
 	"github.com/theparanoids/ysshra/agent/ssh/connection"
+	"github.com/theparanoids/ysshra/agent/utils"
 	"github.com/theparanoids/ysshra/keyid"
 	certutil "github.com/theparanoids/ysshra/sshutils/cert"
 	keyutil "github.com/theparanoids/ysshra/sshutils/key"
@@ -156,7 +157,7 @@ func newShimAgent(conn io.ReadWriteCloser, noUpstream bool) (*Server, error) {
 
 	srv := &Server{
 		conn:                   conn,
-		agent:                  agent.NewClient(conn),
+		agent:                  agent.NewClient(utils.WithoutCloser(conn)),
 		certs:                  make(map[hashcode]*certificate),
 		noUpstreamSSHCACert:    noUpstream,
 		upstreamSSHCACertCache: make(map[hashcode]struct{}),

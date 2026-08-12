@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"errors"
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -15,6 +16,10 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 )
+
+func newAgentClient(conn io.ReadWriter) agent.ExtendedAgent {
+	return agent.NewClient(utils.WithoutCloser(conn))
+}
 
 type client struct {
 	conn     net.Conn
@@ -35,7 +40,7 @@ func NewClient(address string) (YubiAgent, error) {
 	return &client{
 		conn:     conn,
 		connLock: sync.Mutex{},
-		agent:    agent.NewClient(conn),
+		agent:    newAgentClient(conn),
 	}, nil
 }
 
@@ -49,7 +54,7 @@ func NewClientFromConn(c net.Conn) (YubiAgent, error) {
 	return &client{
 		conn:     c,
 		connLock: sync.Mutex{},
-		agent:    agent.NewClient(c),
+		agent:    newAgentClient(c),
 	}, nil
 }
 

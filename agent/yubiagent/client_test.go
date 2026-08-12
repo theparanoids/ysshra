@@ -87,9 +87,22 @@ func (fs mockAgentServer) AttestSlot(slot string) (cert *x509.Certificate, err e
 func createClient(s YubiAgent) (c YubiAgent, cleanup func()) {
 	c1, c2 := net.Pipe()
 	go ServeAgent(s, c1)
-	return &client{c2, sync.Mutex{}, sshagent.NewClient(c2)}, func() {
+	return &client{c2, sync.Mutex{}, newAgentClient(c2)}, func() {
 		c1.Close()
 		c2.Close()
+	}
+}
+
+func TestAgentConnDoesNotExposeCloser(t *testing.T) {
+	var transport any = agentConn{
+		Reader: bytes.NewReader(nil),
+		Writer: io.Discard,
+	}
+	if _, ok := transport.(io.ReadWriter); !ok {
+		t.Fatal("agentConn must implement io.ReadWriter")
+	}
+	if _, ok := transport.(io.Closer); ok {
+		t.Fatal("agentConn must not expose io.Closer; agent.NewClient would enable its background reader")
 	}
 }
 
@@ -630,7 +643,7 @@ func TestClientAddSmartcardKey(t *testing.T) {
 		}
 	}()
 
-	c := &client{c2, sync.Mutex{}, sshagent.NewClient(c2)}
+	c := &client{c2, sync.Mutex{}, newAgentClient(c2)}
 	err := c.AddSmartcardKey("/path/to/lib", []byte("123"), 5*time.Second, false)
 	if err != nil {
 		t.Fatal("unexpected error from AddSmartcardKey: ", err)
@@ -677,7 +690,7 @@ func TestClientRemoveSmartcardKey(t *testing.T) {
 		}
 	}()
 
-	c := &client{c2, sync.Mutex{}, sshagent.NewClient(c2)}
+	c := &client{c2, sync.Mutex{}, newAgentClient(c2)}
 	err := c.RemoveSmartcardKey("/path/to/lib", nil)
 	if err != nil {
 		t.Fatal("unexpected error from RemoveSmartcardKey: ", err)

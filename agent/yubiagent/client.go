@@ -7,6 +7,7 @@ import (
 	"crypto/rand"
 	"crypto/x509"
 	"errors"
+	"io"
 	"net"
 	"sync"
 	"time"
@@ -15,6 +16,20 @@ import (
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 )
+
+// agentConn deliberately exposes only io.ReadWriter. Starting with
+// golang.org/x/crypto v0.54.0, agent.NewClient enables a background response
+// reader when its transport also implements io.Closer. This client performs
+// custom request/response I/O on the same connection, so enabling that reader
+// would race with call for responses and deadlock the client.
+type agentConn struct {
+	io.Reader
+	io.Writer
+}
+
+func newAgentClient(conn io.ReadWriter) agent.ExtendedAgent {
+	return agent.NewClient(agentConn{conn, conn})
+}
 
 type client struct {
 	conn     net.Conn
@@ -35,7 +50,7 @@ func NewClient(address string) (YubiAgent, error) {
 	return &client{
 		conn:     conn,
 		connLock: sync.Mutex{},
-		agent:    agent.NewClient(conn),
+		agent:    newAgentClient(conn),
 	}, nil
 }
 
@@ -49,7 +64,7 @@ func NewClientFromConn(c net.Conn) (YubiAgent, error) {
 	return &client{
 		conn:     c,
 		connLock: sync.Mutex{},
-		agent:    agent.NewClient(c),
+		agent:    newAgentClient(c),
 	}, nil
 }
 

@@ -8,6 +8,7 @@ import (
 	"crypto/rand"
 	"crypto/rsa"
 	"errors"
+	"io"
 	"math/big"
 	"sort"
 	"sync"
@@ -21,6 +22,21 @@ import (
 	ag "golang.org/x/crypto/ssh/agent"
 	"golang.org/x/net/nettest"
 )
+
+func TestAgentConnDoesNotExposeCloser(t *testing.T) {
+	t.Parallel()
+
+	var transport any = agentConn{
+		Reader: bytes.NewReader(nil),
+		Writer: io.Discard,
+	}
+	if _, ok := transport.(io.ReadWriter); !ok {
+		t.Fatal("agentConn must implement io.ReadWriter")
+	}
+	if _, ok := transport.(io.Closer); ok {
+		t.Fatal("agentConn must not expose io.Closer; agent.NewClient would enable its background reader")
+	}
+}
 
 // testServer create a fake server for unit tests
 func testServer(t *testing.T, noUpstream bool) ShimAgent {

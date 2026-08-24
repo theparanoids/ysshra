@@ -19,6 +19,8 @@ const (
 
 type handlerConfMap map[string]interface{}
 
+type SSHKeyConfig map[string]interface{}
+
 // GensignConfig stores the configuration for gensign command.
 type GensignConfig struct {
 	// KeyIDVersion specifies the version of KeyID.

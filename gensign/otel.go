@@ -58,9 +58,9 @@ func ExportGensignRunMetric(ctx context.Context, runErr error) {
 	if runErr != nil {
 		gensignErr, ok := IsError(runErr)
 		if ok {
-			attributes = append(attributes, attribute.Int("gensign.error.type", int(gensignErr.Type())))
+			attributes = append(attributes, attribute.String("gensign.error.type", gensignErr.Type().Name()))
 		} else {
-			attributes = append(attributes, attribute.Int("gensign.error.type", int(Unknown)))
+			attributes = append(attributes, attribute.String("gensign.error.type", Unknown.Name()))
 		}
 	}
 	gensignRunCounter.Add(ctx, 1, metric.WithAttributes(attributes...))

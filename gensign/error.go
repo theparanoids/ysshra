@@ -119,6 +119,34 @@ func (t ErrorType) String() string {
 	}
 }
 
+// Name returns the stable constant name of the ErrorType (e.g. "AllAuthFailed").
+func (t ErrorType) Name() string {
+	switch t {
+	case Unknown:
+		return "Unknown"
+	case HandlerDisabled:
+		return "HandlerDisabled"
+	case HandlerAuthN:
+		return "HandlerAuthN"
+	case InvalidParams:
+		return "InvalidParams"
+	case HandlerGenCSRErr:
+		return "HandlerGenCSRErr"
+	case HandlerConfErr:
+		return "HandlerConfErr"
+	case AllAuthFailed:
+		return "AllAuthFailed"
+	case SignerSignErr:
+		return "SignerSignErr"
+	case AgentOpCertErr:
+		return "AgentOpCertErr"
+	case Panic:
+		return "Panic"
+	default:
+		return fmt.Sprintf("ErrorType(%d)", int(t))
+	}
+}
+
 // IsErrorOfType returns true if the error matches to the given error type.
 func IsErrorOfType(err interface{}, typ ErrorType) bool {
 	e, ok := IsError(err)

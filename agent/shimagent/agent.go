@@ -8,6 +8,12 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 )
 
+// HardCert is a certificate added by AddHardCert, with the comment it was added with.
+type HardCert struct {
+	Cert    *ssh.Certificate
+	Comment string
+}
+
 // ShimAgent is an interface that extends the functionality
 // of the Agent interface in golang.org/x/crypto/ssh/agent.
 type ShimAgent interface {

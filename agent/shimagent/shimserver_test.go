@@ -1054,6 +1054,7 @@ func TestServer_AddHardCert(t *testing.T) {
 					Certificate: certValidSSHCA,
 					Blob:        certValidSSHCA.Marshal(),
 					Comment:     "TouchSudoSSH-a7af667d-suffix",
+					Suffix:      "suffix",
 				},
 			},
 		},
@@ -1066,6 +1067,7 @@ func TestServer_AddHardCert(t *testing.T) {
 					Certificate: certInvalidSSHCA,
 					Blob:        certInvalidSSHCA.Marshal(),
 					Comment:     "suffix",
+					Suffix:      "suffix",
 				},
 			},
 		},
@@ -1115,6 +1117,43 @@ func TestServer_AddHardCert(t *testing.T) {
 					cmp.Diff(server.(*Server).certs, tt.wantInMemory, comparer...))
 			}
 		})
+	}
+}
+
+func TestServer_HardCerts(t *testing.T) {
+	t.Parallel()
+
+	priv, _, err := createPublicKey()
+	if err != nil {
+		t.Fatal(err)
+	}
+	signer, err := ssh.NewSignerFromKey(priv)
+	if err != nil {
+		t.Fatal(err)
+	}
+	cert := &ssh.Certificate{
+		Key:         signer.PublicKey(),
+		ValidBefore: ssh.CertTimeInfinity,
+	}
+	if err := cert.SignCert(rand.Reader, signer); err != nil {
+		t.Fatal(err)
+	}
+
+	server := testServer(t, true)
+	if err := server.Add(ag.AddedKey{PrivateKey: priv}); err != nil {
+		t.Fatal(err)
+	}
+	if err := server.AddHardCert(cert, "suffix"); err != nil {
+		t.Fatal(err)
+	}
+	// HardCerts must not need the underlying agent.
+	if err := server.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	got := server.(*Server).HardCerts()
+	if len(got) != 1 || !bytes.Equal(got[0].Cert.Marshal(), cert.Marshal()) || got[0].Comment != "suffix" {
+		t.Errorf("HardCerts() = %+v, want the added cert with comment %q", got, "suffix")
 	}
 }
 

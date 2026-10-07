@@ -33,6 +33,8 @@ type certificate struct {
 	*ssh.Certificate
 	Blob    []byte
 	Comment string
+	// Suffix is the comment AddHardCert was called with.
+	Suffix string
 }
 
 // Marshal marshals the blob of the certificate.
@@ -335,7 +337,7 @@ func (s *Server) List() ([]*agent.Key, error) {
 			label += "-" + key.Comment
 		}
 
-		keys = append(keys, marshalAgentKey(&certificate{cert, cert.Marshal(), label}))
+		keys = append(keys, marshalAgentKey(&certificate{Certificate: cert, Blob: cert.Marshal(), Comment: label}))
 	}
 
 	sort.Slice(keys, func(i, j int) bool {
@@ -392,11 +394,25 @@ func (s *Server) AddHardCert(key ssh.PublicKey, suffix string) error {
 	}
 	for _, agentKey := range agentKeys {
 		if bytes.Equal(agentKey.Marshal(), cert.Key.Marshal()) {
-			s.certs[keyHash] = &certificate{cert, cert.Marshal(), label}
+			s.certs[keyHash] = &certificate{cert, cert.Marshal(), label, suffix}
 			return nil
 		}
 	}
 	return errAgentNotFoundKey
+}
+
+// HardCerts returns the certificates added by AddHardCert, with the comments
+// they were added with. It does not touch the underlying agent, so it still
+// works after that agent has died.
+func (s *Server) HardCerts() []HardCert {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	certs := make([]HardCert, 0, len(s.certs))
+	for _, c := range s.certs {
+		certs = append(certs, HardCert{Cert: c.Certificate, Comment: c.Suffix})
+	}
+	return certs
 }
 
 func (s *Server) Sign(key ssh.PublicKey, data []byte) (*ssh.Signature, error) {

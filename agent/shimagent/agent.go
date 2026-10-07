@@ -8,9 +8,10 @@ import (
 	"golang.org/x/crypto/ssh/agent"
 )
 
-// HardCert is a certificate added by AddHardCert, with the comment it was added with.
+// HardCert is a certificate added by AddHardCert.
 type HardCert struct {
-	Cert    *ssh.Certificate
+	Cert *ssh.Certificate
+	// Comment is the comment passed to AddHardCert, which ssh-add -l shows after the cert label.
 	Comment string
 }
 

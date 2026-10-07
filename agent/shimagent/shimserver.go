@@ -33,7 +33,7 @@ type certificate struct {
 	*ssh.Certificate
 	Blob    []byte
 	Comment string
-	// Suffix is the comment AddHardCert was called with.
+	// Suffix is the comment passed to AddHardCert; Comment is "<cert label>-<Suffix>".
 	Suffix string
 }
 

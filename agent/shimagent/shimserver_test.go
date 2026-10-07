@@ -1152,8 +1152,8 @@ func TestServer_HardCerts(t *testing.T) {
 	}
 
 	got := server.(*Server).HardCerts()
-	if len(got) != 1 || !bytes.Equal(got[0].Cert.Marshal(), cert.Marshal()) || got[0].Comment != "suffix" {
-		t.Errorf("HardCerts() = %+v, want the added cert with comment %q", got, "suffix")
+	if len(got) != 1 || !bytes.Equal(got[0].Cert.Marshal(), cert.Marshal()) || got[0].Suffix != "suffix" {
+		t.Errorf("HardCerts() = %+v, want the added cert with suffix %q", got, "suffix")
 	}
 }
 

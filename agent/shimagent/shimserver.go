@@ -401,16 +401,15 @@ func (s *Server) AddHardCert(key ssh.PublicKey, suffix string) error {
 	return errAgentNotFoundKey
 }
 
-// HardCerts returns the certificates added by AddHardCert, with the comments
-// they were added with. It does not touch the underlying agent, so it still
-// works after that agent has died.
+// HardCerts returns the certificates added by AddHardCert, with their suffixes.
+// It does not touch the underlying agent, so it still works after that agent has died.
 func (s *Server) HardCerts() []HardCert {
 	s.mu.RLock()
 	defer s.mu.RUnlock()
 
 	certs := make([]HardCert, 0, len(s.certs))
 	for _, c := range s.certs {
-		certs = append(certs, HardCert{Cert: c.Certificate, Comment: c.Suffix})
+		certs = append(certs, HardCert{Cert: c.Certificate, Suffix: c.Suffix})
 	}
 	return certs
 }

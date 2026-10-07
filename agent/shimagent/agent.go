@@ -11,8 +11,8 @@ import (
 // HardCert is a certificate added by AddHardCert.
 type HardCert struct {
 	Cert *ssh.Certificate
-	// Comment is the comment passed to AddHardCert, which ssh-add -l shows after the cert label.
-	Comment string
+	// Suffix is the comment passed to AddHardCert, which ssh-add -l shows after the cert label.
+	Suffix string
 }
 
 // ShimAgent is an interface that extends the functionality
